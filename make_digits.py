@@ -37,9 +37,22 @@ OUTLINE = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 GOLD = (255, 198, 64, 255)
 
-# where each set starts in the private use area
-STARTS = {("mc", "white"): 0xE100, ("mc", "crit"): 0xE120,
-          ("kanit", "white"): 0xE140, ("kanit", "crit"): 0xE160}
+# Four families to choose between, each with a plain and a critical set. Everything but "mc" is a
+# pixel typeface - drawn on a grid to begin with, so it survives being shrunk to a few pixels tall,
+# which is exactly what Kanit could not do.
+FAMILIES = {
+    "mc":     {"source": "client", "size": 0, "scale": 1, "crit_scale": 2},
+    "kanit":  {"source": os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf"),
+               "size": 13, "scale": 1, "crit_scale": 1, "crit_size": 19},
+    "silk":   {"source": os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf"),
+               "size": 8, "scale": 1, "crit_scale": 2},
+    "arcade": {"source": os.path.join(HERE, "fonts", "PressStart2P-Regular.ttf"),
+               "size": 8, "scale": 1, "crit_scale": 2},
+}
+# every family gets these colours; a bitmap cannot be tinted, so each one is baked
+TONES = {"white": (255, 255, 255, 255), "crit": (255, 198, 64, 255),
+         "hurt": (255, 86, 86, 255), "heal": (126, 240, 130, 255)}
+BASE = 0xE100          # families and tones are laid out 32 codepoints apart from here
 
 
 def ink_from_client(character):
@@ -55,8 +68,8 @@ def ink_from_client(character):
     return mask.crop(mask.getbbox()) if mask.getbbox() else mask
 
 
-def ink_from_kanit(character, size):
-    font = ImageFont.truetype(TTF, size)
+def ink_from_ttf(path, character, size):
+    font = ImageFont.truetype(path, size)
     box = font.getbbox(character)
     mask = Image.new("L", (max(1, box[2] - box[0]) + 2, size + 2), 0)
     ImageDraw.Draw(mask).text((1 - box[0], 1 - box[1]), character, font=font, fill=255)
@@ -78,29 +91,36 @@ def glyph(mask, scale, fill):
     return image
 
 
+def start_of(family, tone):
+    """Where a family and tone begin in the private use area."""
+    return BASE + list(FAMILIES).index(family) * 128 + list(TONES).index(tone) * 32
+
+
 def main():
     path = os.path.join(FONTS, "ui.json")
     existing = json.load(io.open(path, encoding="utf-8"))["providers"]
     providers = [p for p in existing if p["type"] != "bitmap" or "num_" not in p.get("file", "")]
 
-    for (family, tone), first in STARTS.items():
-        crit = tone == "crit"
-        for index, character in enumerate(GLYPHS):
-            if family == "mc":
-                mask = ink_from_client(character)
-                picture = glyph(mask, 2 if crit else 1, GOLD if crit else WHITE)
-            else:
-                mask = ink_from_kanit(character, 19 if crit else 13)
-                picture = glyph(mask, 1, GOLD if crit else WHITE)
-            file = "num_%s_%s_%02d.png" % (family, tone, index)
-            picture.save(os.path.join(TEXTURES, file))
-            providers.append({
-                "type": "bitmap",
-                "file": "asuracraft:font/" + file,
-                "ascent": picture.height - 2,
-                "height": picture.height,
-                "chars": [chr(first + index)],
-            })
+    for family, spec in FAMILIES.items():
+        for tone, colour in TONES.items():
+            crit = tone == "crit"
+            first = start_of(family, tone)
+            for index, character in enumerate(GLYPHS):
+                if spec["source"] == "client":
+                    mask = ink_from_client(character)
+                else:
+                    size = spec.get("crit_size", spec["size"]) if crit else spec["size"]
+                    mask = ink_from_ttf(spec["source"], character, size)
+                picture = glyph(mask, spec["crit_scale"] if crit else spec["scale"], colour)
+                file = "num_%s_%s_%02d.png" % (family, tone, index)
+                picture.save(os.path.join(TEXTURES, file))
+                providers.append({
+                    "type": "bitmap",
+                    "file": "asuracraft:font/" + file,
+                    "ascent": picture.height - 2,
+                    "height": picture.height,
+                    "chars": [chr(first + index)],
+                })
 
     with io.open(path, "w", encoding="utf-8") as out:
         json.dump({"providers": providers}, out, ensure_ascii=False, indent=2)
@@ -111,8 +131,11 @@ def main():
             for name in files:
                 full = os.path.join(folder, name)
                 pack.write(full, os.path.relpath(full, PACK).replace(os.sep, "/"))
-    print("digits", len(GLYPHS) * len(STARTS), "glyphs |", ", ".join(
-        "%s/%s at U+%04X" % (f, t, c) for (f, t), c in STARTS.items()))
+    print("digits", len(GLYPHS) * len(FAMILIES) * len(TONES), "glyphs")
+    for family in FAMILIES:
+        print("  %-7s white U+%04X  crit U+%04X  hurt U+%04X  heal U+%04X" % (
+            family, start_of(family, "white"), start_of(family, "crit"),
+            start_of(family, "hurt"), start_of(family, "heal")))
 
 
 if __name__ == "__main__":
