@@ -81,7 +81,7 @@ def main():
             # once low on the screen, for a monster's name tag (health only), and once high, for the HUD
             if kind == "hp":
                 providers.append({"type": "bitmap", "file": "asuracraft:font/" + name,
-                                  "ascent": 8, "height": HEIGHT, "chars": [chr(FIRST + step)]})
+                                  "ascent": HEIGHT, "height": HEIGHT, "chars": [chr(FIRST + step)]})
             providers.append({"type": "bitmap", "file": "asuracraft:font/" + hud_name,
                               "ascent": HEIGHT + KINDS[kind]["lift"],
                               "height": HEIGHT + KINDS[kind]["lift"],
