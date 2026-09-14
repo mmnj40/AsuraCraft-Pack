@@ -25,7 +25,14 @@ WIDTH, HEIGHT = 80, 9
 STEPS = 10
 FIRST = 0xE010                      # E010..E01A: bars for a monster's name tag
 HUD_FIRST = 0xE020                  # E020..E02A: the same bars, lifted to the top of the screen
-HUD_ASCENT = 100                    # how far above the text line the HUD is drawn
+# How far above the text line the HUD is drawn.
+#
+# It cannot simply be an ascent of 100: the client validates that ascent <= height (checked in
+# BitmapProvider$Definition in the 26.2 jar), and a provider that fails validation is thrown away whole,
+# which is why every glyph in the font came out as an empty square. So the picture is given a tall
+# transparent canvas instead, with the bar at the very top: height and ascent both equal the canvas, and
+# the bar ends up LIFT pixels above the line because that is how much empty space is under it.
+HUD_LIFT = 100
 # A "space" font: characters whose only job is to move the pen, including backwards. This is what lets
 # a HUD sit anywhere across the screen - the text is still sent through the action bar, but the pen is
 # walked left before the picture is drawn. Powers of two compose any offset, like binary.
@@ -45,11 +52,11 @@ KINDS = {
 }
 
 
-def bar(step, kind="hp"):
+def bar(step, kind="hp", lift=0):
     """One bar, filled step/10 of the way, in one of the three colours."""
     low = KINDS[kind]["low"]
     high = KINDS[kind]["high"]
-    image = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    image = Image.new("RGBA", (WIDTH, HEIGHT + lift), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     draw.rectangle([0, 0, WIDTH - 1, HEIGHT - 1], fill=EDGE)
     draw.rectangle([1, 1, WIDTH - 2, HEIGHT - 2], fill=EMPTY)
@@ -73,13 +80,15 @@ def main():
     for kind in KINDS:
         for step in range(STEPS + 1):
             name = "bar_%s_%02d.png" % (kind, step)
+            hud_name = "hud_%s_%02d.png" % (kind, step)
             bar(step, kind).save(os.path.join(TEXTURES, name))
+            bar(step, kind, HUD_LIFT).save(os.path.join(TEXTURES, hud_name))
             # once low on the screen, for a monster's name tag (health only), and once high, for the HUD
             if kind == "hp":
                 providers.append({"type": "bitmap", "file": "asuracraft:font/" + name,
                                   "ascent": 8, "height": HEIGHT, "chars": [chr(FIRST + step)]})
-            providers.append({"type": "bitmap", "file": "asuracraft:font/" + name,
-                              "ascent": HUD_ASCENT, "height": HEIGHT,
+            providers.append({"type": "bitmap", "file": "asuracraft:font/" + hud_name,
+                              "ascent": HEIGHT + HUD_LIFT, "height": HEIGHT + HUD_LIFT,
                               "chars": [chr(KINDS[kind]["hud"] + step)]})
     providers.append({
         "type": "space",
