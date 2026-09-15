@@ -1,0 +1,6 @@
+AsuraCraft resource pack - sound credits
+
+gun/shot.ogg, gun/shot_short.ogg
+  cut from "Gunshots 8.ogg" by aradlaw, via Wikimedia Commons
+  https://commons.wikimedia.org/wiki/File:Gunshots_8.ogg
+  Public domain (from PDSounds.org). No attribution required; recorded here anyway.
