@@ -46,19 +46,26 @@ SPACE = {0xF801: -1, 0xF802: -2, 0xF804: -4, 0xF808: -8, 0xF810: -16, 0xF820: -3
 # Flat, thin, and slightly see-through, the way a bar in Albion or BDO sits on the screen: it is meant
 # to be read without being looked at. A glossy bar with a gradient reads as a sticker pasted over the
 # world - which is exactly how the first version looked.
-# Solid, and light enough to carry its own contrast.
+# What an enemy health bar looks like nearly everywhere - WoW, Diablo, Albion, BDO - is a bright red
+# fill over a very dark red track, ringed by a hard border. The dark red matters: an empty stretch that
+# is merely grey stops reading as health at a glance, while a dark red one still says blood.
 #
-# The first version was dark and half see-through, which looked right in daylight and vanished at night:
-# a name tag is drawn at full brightness whatever the hour, so the bar was never being dimmed - it was
-# the world behind it going dark and a translucent near-black bar having nothing left to stand against.
-EDGE = (8, 8, 10, 255)
-EMPTY = (72, 72, 80, 235)
+# The border is grey rather than the black those games use, and that is a deliberate difference. Their
+# bars sit on a solid interface panel; this one hangs in the world, on a name tag whose own backing is
+# dark and see-through, so a black ring round it disappears into the night along with everything else.
+# A grey ring keeps the shape of the bar readable at any hour and whatever is standing behind it.
+#
+# Every colour is fully opaque. The first version was half see-through, which looked right in daylight
+# and vanished after dusk: a name tag is drawn at full brightness whatever the hour, so the bar was
+# never being dimmed - the world behind it went dark and a translucent bar had nothing to stand against.
+EDGE = (90, 90, 98, 255)
+EMPTY = (46, 20, 22, 255)
 # three bars, three jobs: blood, magic, breath. Each is a dark-to-light pair so the fill is shaded
 # rather than flat - flat colour reads as a sticker pasted on the screen.
 # Each bar is lifted a different amount so the two can be stacked: a line of text runs sideways, so
 # two pictures at the same height would simply sit on top of each other - which they did.
 KINDS = {
-    "hp":   {"fill": (222, 62, 54, 255),  "hud": 0xE020, "lift": 100},
+    "hp":   {"fill": (230, 58, 48, 255),  "hud": 0xE020, "lift": 100},
     "mana": {"fill": (64, 126, 228, 255),  "hud": 0xE030, "lift": 90},
 }
 
