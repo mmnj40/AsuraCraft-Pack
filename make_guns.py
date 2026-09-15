@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Draws the guns, and tells the game which picture belongs to which item.
+"""Draws the guns the way Minecraft expects a held item to be drawn.
 
-Pixel art rather than a modelled weapon, and on purpose. A gun held in Minecraft is seen at arm's
-length for a fraction of a second between recoils; a hand-built three-dimensional model costs days of
-work to be recognised in the same tenth of a second that a clear silhouette manages. What matters is
-that a sniper cannot be mistaken for an SMG at a glance, which is a matter of outline, not of geometry.
+The first attempt drew them flat, muzzle to the right, and they came out pointing across the player's
+chest. That is not a bug in the display settings - it is what the game does with every held item. A
+vanilla sword, pickaxe and axe are all drawn along the DIAGONAL, tip at the top right, because the hand
+holds a sprite rotated forty-five degrees. Draw a gun flat and the game faithfully holds it sideways.
 
-Named item models rather than numbered variants: the item asks for "asuracraft:rifle" by name, so a gun
-added next month cannot shuffle the numbering of the guns already in players' hands.
+So everything here is built from diagonal strokes running bottom-left to top-right: the stock sits in
+the corner by the wrist and the muzzle points where the player is looking, which is what "pointing
+forward" actually means for a held sprite.
 """
 import io
 import json
 import os
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PACK = os.path.join(HERE, "pack")
@@ -21,120 +22,136 @@ ITEMS = os.path.join(PACK, "assets", "asuracraft", "items")
 MODELS = os.path.join(PACK, "assets", "asuracraft", "models", "item")
 TEXTURES = os.path.join(PACK, "assets", "asuracraft", "textures", "item")
 
-# A gun is drawn on a sixteen pixel grid, side on, muzzle to the right - the direction Minecraft holds
-# an item in the first person. Three tones each: body, a darker edge, and one highlight so the shape
-# reads against both a bright sky and a dark building.
-STEEL = (58, 62, 70, 255)
-STEEL_DARK = (32, 34, 40, 255)
-STEEL_LIGHT = (96, 102, 112, 255)
-WOOD = (104, 72, 42, 255)
-WOOD_DARK = (68, 46, 26, 255)
-BLACK = (22, 22, 26, 255)
-GLASS = (140, 200, 230, 255)
+# Five tones. Three was enough to tell the guns apart and not enough to make any of them look made of
+# anything: a barrel needs a lit top and a shaded underside or it reads as a grey stick.
+EDGE = (18, 18, 22, 255)
+STEEL_DARK = (44, 48, 56, 255)
+STEEL = (72, 78, 88, 255)
+STEEL_LIT = (122, 130, 142, 255)
+WOOD = (110, 74, 42, 255)
+WOOD_LIT = (146, 102, 60, 255)
+WOOD_DARK = (70, 46, 26, 255)
+GLASS = (150, 210, 240, 255)
+BRASS = (198, 158, 70, 255)
 
-# Each gun is a list of (x, y, width, height, colour) rectangles on the 16x16 grid.
+
+def stroke(pen, x0, y0, x1, y1, colour, width=1):
+    """A band of pixels from one point to another, thickened across the diagonal.
+
+    Walking the longer axis one pixel at a time keeps the line solid - a naive step of one on both axes
+    leaves corner gaps that read as a dotted line at this size.
+    """
+    steps = max(abs(x1 - x0), abs(y1 - y0))
+    if steps == 0:
+        steps = 1
+    for step in range(steps + 1):
+        x = round(x0 + (x1 - x0) * step / steps)
+        y = round(y0 + (y1 - y0) * step / steps)
+        for across in range(width):
+            # Clamped rather than trusted: a stroke drawn to the very corner of a sixteen pixel square
+            # with any thickness at all runs off the edge, and one stray pixel takes the whole file down.
+            at_x = min(15, max(0, x))
+            at_y = min(15, max(0, y + across))
+            pen[at_x, at_y] = colour
+
+
+def gun(strokes):
+    image = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    pen = image.load()
+    for args in strokes:
+        stroke(pen, *args)
+    return image
+
+
+# Coordinates run with y downward. Bottom-left is the wrist, top-right is the muzzle - the same axis a
+# sword's blade runs along, which is the only orientation the game holds correctly.
 GUNS = {
+    # Short, blunt, no stock. Reads as a sidearm by being half the length of everything else.
     "pistol": [
-        (3, 6, 9, 3, STEEL),          # slide
-        (3, 6, 9, 1, STEEL_LIGHT),    # highlight along the top
-        (3, 9, 3, 1, STEEL_DARK),     # frame under the slide
-        (4, 9, 2, 4, WOOD),           # grip
-        (4, 9, 1, 4, WOOD_DARK),
-        (6, 9, 2, 2, STEEL_DARK),     # trigger guard
-        (11, 7, 1, 1, BLACK),         # muzzle
+        (5, 10, 11, 4, EDGE, 4),
+        (5, 10, 11, 4, STEEL, 3),
+        (5, 10, 11, 4, STEEL_LIT, 1),
+        (4, 13, 6, 10, WOOD_DARK, 3),
+        (4, 13, 6, 10, WOOD, 2),
+        (11, 4, 12, 3, EDGE, 2),
     ],
+    # A long thin receiver with a magazine hanging straight down: the outline everyone reads as an SMG.
     "smg": [
-        (2, 6, 11, 3, STEEL),
-        (2, 6, 11, 1, STEEL_LIGHT),
-        (1, 6, 1, 2, STEEL_DARK),     # stock stub
-        (5, 9, 2, 5, STEEL_DARK),     # magazine, long and straight
-        (3, 9, 2, 3, WOOD),           # grip
-        (7, 9, 2, 2, STEEL_DARK),
-        (12, 7, 2, 1, BLACK),         # barrel
-        (13, 5, 1, 2, STEEL_DARK),    # front sight
+        (3, 12, 12, 3, EDGE, 4),
+        (3, 12, 12, 3, STEEL_DARK, 3),
+        (3, 12, 12, 3, STEEL, 2),
+        (3, 12, 12, 3, STEEL_LIT, 1),
+        (6, 13, 5, 15, STEEL_DARK, 2),
+        (4, 12, 3, 13, EDGE, 2),
+        (12, 3, 14, 1, EDGE, 2),
+        (12, 3, 13, 2, STEEL_LIT, 1),
     ],
+    # Full length, curved magazine, wooden furniture, a sight standing up off the receiver.
     "rifle": [
-        (1, 7, 13, 3, STEEL),
-        (1, 7, 13, 1, STEEL_LIGHT),
-        (0, 7, 2, 3, WOOD),           # shoulder stock
-        (0, 7, 1, 3, WOOD_DARK),
-        (6, 10, 2, 4, STEEL_DARK),    # curved magazine
-        (7, 12, 2, 2, STEEL_DARK),
-        (4, 10, 2, 3, WOOD),          # grip
-        (13, 8, 3, 1, BLACK),         # long barrel
-        (11, 5, 1, 2, STEEL_DARK),    # rear sight
-        (3, 5, 4, 2, STEEL_DARK),     # top rail
+        (1, 14, 14, 1, EDGE, 4),
+        (1, 14, 14, 1, STEEL_DARK, 3),
+        (2, 13, 14, 1, STEEL, 2),
+        (2, 13, 13, 2, STEEL_LIT, 1),
+        (1, 14, 4, 11, WOOD_DARK, 4),
+        (2, 14, 4, 12, WOOD, 3),
+        (2, 14, 3, 13, WOOD_LIT, 1),
+        (6, 12, 5, 15, STEEL_DARK, 2),
+        (7, 11, 6, 14, STEEL_DARK, 2),
+        (9, 7, 10, 6, EDGE, 2),
+        (14, 1, 15, 0, EDGE, 2),
+        (8, 9, 9, 8, WOOD, 2),
     ],
+    # The longest outline, a scope sitting above the barrel, and a bipod under the muzzle.
     "sniper": [
-        (1, 8, 14, 2, STEEL),
-        (1, 8, 14, 1, STEEL_LIGHT),
-        (0, 7, 2, 4, WOOD),           # heavy stock
-        (0, 7, 1, 4, WOOD_DARK),
-        (4, 4, 7, 2, STEEL_DARK),     # scope body
-        (4, 4, 7, 1, STEEL_LIGHT),
-        (10, 4, 1, 2, GLASS),         # lens
-        (5, 6, 1, 2, STEEL_DARK),     # scope mounts
-        (9, 6, 1, 2, STEEL_DARK),
-        (4, 10, 2, 3, WOOD),          # grip
-        (14, 8, 2, 1, BLACK),         # muzzle brake
-        (11, 10, 3, 1, STEEL_DARK),   # bipod stub
+        (0, 15, 15, 0, EDGE, 4),
+        (0, 15, 15, 0, STEEL_DARK, 3),
+        (1, 15, 15, 1, STEEL, 2),
+        (1, 14, 14, 1, STEEL_LIT, 1),
+        (0, 15, 3, 12, WOOD_DARK, 4),
+        (1, 15, 3, 13, WOOD, 3),
+        (6, 9, 11, 4, EDGE, 3),
+        (6, 9, 11, 4, STEEL_DARK, 2),
+        (7, 9, 10, 5, GLASS, 1),
+        (6, 11, 7, 10, STEEL_DARK, 2),
+        (10, 7, 11, 6, STEEL_DARK, 2),
+        (13, 4, 13, 7, STEEL_DARK, 1),
+        (15, 0, 15, 2, EDGE, 1),
     ],
+    # A fat bore and a wooden pump running most of the length underneath it.
     "shotgun": [
-        (1, 7, 13, 2, STEEL),
-        (1, 7, 13, 1, STEEL_LIGHT),
-        (1, 9, 10, 2, WOOD),          # pump under the barrel
-        (1, 9, 10, 1, WOOD_DARK),
-        (0, 6, 2, 4, WOOD),           # stock
-        (5, 11, 3, 2, STEEL_DARK),    # trigger group
-        (13, 7, 3, 2, BLACK),         # wide bore
+        (1, 14, 14, 1, EDGE, 4),
+        (1, 14, 14, 1, STEEL_DARK, 3),
+        (2, 14, 14, 2, STEEL, 2),
+        (2, 13, 13, 2, STEEL_LIT, 1),
+        (0, 15, 3, 12, WOOD_DARK, 4),
+        (1, 15, 3, 13, WOOD, 3),
+        (4, 14, 10, 8, WOOD_DARK, 3),
+        (4, 14, 10, 8, WOOD, 2),
+        (5, 14, 10, 9, WOOD_LIT, 1),
+        (13, 2, 15, 0, EDGE, 3),
+        (13, 2, 15, 0, STEEL_DARK, 2),
+        (7, 12, 8, 11, BRASS, 1),
     ],
 }
-
-
-def draw(shapes):
-    """One gun, on a transparent sixteen by sixteen square."""
-    image = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    pen = ImageDraw.Draw(image)
-    for x, y, width, height, colour in shapes:
-        pen.rectangle([x, y, x + width - 1, y + height - 1], fill=colour)
-    return image
 
 
 def main():
     for folder in (ITEMS, MODELS, TEXTURES):
         os.makedirs(folder, exist_ok=True)
 
-    for name, shapes in GUNS.items():
-        draw(shapes).save(os.path.join(TEXTURES, name + ".png"))
+    for name, strokes in GUNS.items():
+        gun(strokes).save(os.path.join(TEXTURES, name + ".png"))
 
-        # The model: a flat sprite, held the way a tool is held so it points away from the player
-        # rather than lying across their chest.
+        # handheld, with no display overrides of our own. Its defaults are what a sword uses, and the
+        # art is now drawn on the axis those defaults expect - so the gun points where the player looks
+        # without a single number being tuned by hand.
         model = {
             "parent": "minecraft:item/handheld",
             "textures": {"layer0": "asuracraft:item/" + name},
-            "display": {
-                "thirdperson_righthand": {
-                    "rotation": [0, -90, 25],
-                    "translation": [0, 4, 2],
-                    "scale": [0.85, 0.85, 0.85],
-                },
-                "firstperson_righthand": {
-                    "rotation": [0, -90, 25],
-                    "translation": [1.13, 3.2, 1.13],
-                    "scale": [0.68, 0.68, 0.68],
-                },
-                "gui": {
-                    "rotation": [0, 0, 0],
-                    "translation": [0, 0, 0],
-                    "scale": [1.0, 1.0, 1.0],
-                },
-            },
         }
         with io.open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as out:
             json.dump(model, out, ensure_ascii=False, indent=2)
 
-        # The item model definition: what the server names when it sets the item_model component.
-        # Naming beats numbering - a new gun cannot renumber the ones already made.
         definition = {"model": {"type": "minecraft:model", "model": "asuracraft:item/" + name}}
         with io.open(os.path.join(ITEMS, name + ".json"), "w", encoding="utf-8") as out:
             json.dump(definition, out, ensure_ascii=False, indent=2)
