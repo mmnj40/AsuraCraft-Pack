@@ -340,9 +340,10 @@ def main():
     # What the server asks for by name.
     definitions = {}
     for name in made:
+        # No subtitle key. A subtitle names a translation entry, and a name with nothing behind it is
+        # printed raw on the screen of every player who has subtitles switched on.
         definitions[name.replace("/", ".")] = {
             "category": "player",
-            "subtitle": "asuracraft.subtitle." + name.split("/")[0],
             "sounds": [{"name": "asuracraft:" + name, "stream": False}],
         }
     with io.open(os.path.join(PACK, "assets", "asuracraft", "sounds.json"), "w",
