@@ -44,8 +44,11 @@ FAMILIES = {
     "mc":     {"source": "client", "size": 0, "scale": 1, "crit_scale": 2},
     "kanit":  {"source": os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf"),
                "size": 13, "scale": 1, "crit_scale": 1, "crit_size": 19},
+    # A critical is bigger, but only a little: at double size it stopped reading as the same number
+    # in a louder voice and started reading as a different kind of thing altogether. Ten pixels
+    # against eight lands a fifth taller, which is enough to notice and not enough to shout.
     "silk":   {"source": os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf"),
-               "size": 8, "scale": 1, "crit_scale": 2},
+               "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
     "arcade": {"source": os.path.join(HERE, "fonts", "PressStart2P-Regular.ttf"),
                "size": 8, "scale": 1, "crit_scale": 2},
 }
