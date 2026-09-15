@@ -40,29 +40,33 @@ GOLD = (255, 198, 64, 255)
 # Four families to choose between, each with a plain and a critical set. Everything but "mc" is a
 # pixel typeface - drawn on a grid to begin with, so it survives being shrunk to a few pixels tall,
 # which is exactly what Kanit could not do.
+def pixel(name, size, crit=None):
+    """A typeface from the fonts folder, rendered at a size that lands on the pixel grid."""
+    return {"source": os.path.join(HERE, "fonts", name), "size": size,
+            "scale": 1, "crit_scale": 1, "crit_size": crit or round(size * 1.25)}
+
+
+# The families to choose between. All but "mc" are pixel typefaces - drawn on a grid to begin with, so
+# they survive being rendered a few pixels tall. Typefaces built from curves do not: Kanit, Russo One,
+# Orbitron, Bungee and Teko were all tried here and every one of them came out of the threshold with
+# uneven stems and lumpy bowls, because at eight pixels there is nowhere for a curve to go.
+#
+# A critical is bigger, but only a little: at double size it stopped reading as the same number in a
+# louder voice and started reading as a different kind of thing altogether. A quarter up in point size
+# lands about a fifth taller on the grid, which is enough to notice and not enough to shout.
 FAMILIES = {
     "mc":       {"source": "client", "size": 0, "scale": 1, "crit_scale": 2},
-    "kanit":    {"source": os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf"),
-                 "size": 13, "scale": 1, "crit_scale": 1, "crit_size": 16},
-    # A critical is bigger, but only a little: at double size it stopped reading as the same number
-    # in a louder voice and started reading as a different kind of thing altogether. Ten pixels
-    # against eight lands a fifth taller, which is enough to notice and not enough to shout.
-    "silk":     {"source": os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf"),
-                 "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
-    "arcade":   {"source": os.path.join(HERE, "fonts", "PressStart2P-Regular.ttf"),
-                 "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
-    "jersey":   {"source": os.path.join(HERE, "fonts", "Jersey10-Regular.ttf"),
-                 "size": 12, "scale": 1, "crit_scale": 1, "crit_size": 15},
-    "terminal": {"source": os.path.join(HERE, "fonts", "VT323-Regular.ttf"),
-                 "size": 14, "scale": 1, "crit_scale": 1, "crit_size": 17},
-    "russo":    {"source": os.path.join(HERE, "fonts", "RussoOne-Regular.ttf"),
-                 "size": 11, "scale": 1, "crit_scale": 1, "crit_size": 14},
-    "bungee":   {"source": os.path.join(HERE, "fonts", "Bungee-Regular.ttf"),
-                 "size": 10, "scale": 1, "crit_scale": 1, "crit_size": 12},
-    "orbitron": {"source": os.path.join(HERE, "fonts", "Orbitron.ttf"),
-                 "size": 11, "scale": 1, "crit_scale": 1, "crit_size": 14},
-    "teko":     {"source": os.path.join(HERE, "fonts", "Teko.ttf"),
-                 "size": 15, "scale": 1, "crit_scale": 1, "crit_size": 18},
+    "silk":     pixel("Silkscreen-Bold.ttf", 8, 10),
+    "arcade":   pixel("PressStart2P-Regular.ttf", 8, 10),
+    "jersey":   pixel("Jersey10-Regular.ttf", 14),
+    "jersey15": pixel("Jersey15.ttf", 14),
+    "pixelify": pixel("PixelifySans.ttf", 14),
+    "tiny5":    pixel("Tiny5.ttf", 12),
+    "micro5":   pixel("Micro5.ttf", 16),
+    "dot":      pixel("DotGothic16.ttf", 10),
+    "doto":     pixel("Doto.ttf", 12),
+    "handjet":  pixel("Handjet.ttf", 12),
+    "terminal": pixel("VT323-Regular.ttf", 12),
 }
 # every family gets these colours; a bitmap cannot be tinted, so each one is baked
 TONES = {"white": (255, 255, 255, 255), "crit": (255, 198, 64, 255),
@@ -115,6 +119,12 @@ def main():
     path = os.path.join(FONTS, "ui.json")
     existing = json.load(io.open(path, encoding="utf-8"))["providers"]
     providers = [p for p in existing if p["type"] != "bitmap" or "num_" not in p.get("file", "")]
+
+    # Sweep out the pictures of families that have since been dropped. Leaving them behind only puts
+    # dead weight in the download and glyphs in the atlas that nothing points at any more.
+    for stale in os.listdir(TEXTURES):
+        if stale.startswith("num_"):
+            os.remove(os.path.join(TEXTURES, stale))
 
     for family, spec in FAMILIES.items():
         for tone, colour in TONES.items():
