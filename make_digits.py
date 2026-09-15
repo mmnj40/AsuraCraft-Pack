@@ -32,7 +32,7 @@ FONTS = os.path.join(PACK, "assets", "asuracraft", "font")
 TTF = os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf")
 CLIENT = os.path.join(os.environ["APPDATA"], ".minecraft", "versions", "26.2", "26.2.jar")
 
-GLYPHS = "0123456789.,KM+"
+GLYPHS = "0123456789.,KM+!"
 OUTLINE = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 GOLD = (255, 198, 64, 255)
@@ -41,16 +41,28 @@ GOLD = (255, 198, 64, 255)
 # pixel typeface - drawn on a grid to begin with, so it survives being shrunk to a few pixels tall,
 # which is exactly what Kanit could not do.
 FAMILIES = {
-    "mc":     {"source": "client", "size": 0, "scale": 1, "crit_scale": 2},
-    "kanit":  {"source": os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf"),
-               "size": 13, "scale": 1, "crit_scale": 1, "crit_size": 19},
+    "mc":       {"source": "client", "size": 0, "scale": 1, "crit_scale": 2},
+    "kanit":    {"source": os.path.join(PACK, "assets", "minecraft", "font", "thai.ttf"),
+                 "size": 13, "scale": 1, "crit_scale": 1, "crit_size": 16},
     # A critical is bigger, but only a little: at double size it stopped reading as the same number
     # in a louder voice and started reading as a different kind of thing altogether. Ten pixels
     # against eight lands a fifth taller, which is enough to notice and not enough to shout.
-    "silk":   {"source": os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf"),
-               "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
-    "arcade": {"source": os.path.join(HERE, "fonts", "PressStart2P-Regular.ttf"),
-               "size": 8, "scale": 1, "crit_scale": 2},
+    "silk":     {"source": os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf"),
+                 "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
+    "arcade":   {"source": os.path.join(HERE, "fonts", "PressStart2P-Regular.ttf"),
+                 "size": 8, "scale": 1, "crit_scale": 1, "crit_size": 10},
+    "jersey":   {"source": os.path.join(HERE, "fonts", "Jersey10-Regular.ttf"),
+                 "size": 12, "scale": 1, "crit_scale": 1, "crit_size": 15},
+    "terminal": {"source": os.path.join(HERE, "fonts", "VT323-Regular.ttf"),
+                 "size": 14, "scale": 1, "crit_scale": 1, "crit_size": 17},
+    "russo":    {"source": os.path.join(HERE, "fonts", "RussoOne-Regular.ttf"),
+                 "size": 11, "scale": 1, "crit_scale": 1, "crit_size": 14},
+    "bungee":   {"source": os.path.join(HERE, "fonts", "Bungee-Regular.ttf"),
+                 "size": 10, "scale": 1, "crit_scale": 1, "crit_size": 12},
+    "orbitron": {"source": os.path.join(HERE, "fonts", "Orbitron.ttf"),
+                 "size": 11, "scale": 1, "crit_scale": 1, "crit_size": 14},
+    "teko":     {"source": os.path.join(HERE, "fonts", "Teko.ttf"),
+                 "size": 15, "scale": 1, "crit_scale": 1, "crit_size": 18},
 }
 # every family gets these colours; a bitmap cannot be tinted, so each one is baked
 TONES = {"white": (255, 255, 255, 255), "crit": (255, 198, 64, 255),
