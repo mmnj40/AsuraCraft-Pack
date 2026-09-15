@@ -21,7 +21,10 @@ PACK = os.path.join(HERE, "pack")
 TEXTURES = os.path.join(PACK, "assets", "asuracraft", "textures", "font")
 FONTS = os.path.join(PACK, "assets", "asuracraft", "font")
 
-WIDTH, HEIGHT = 76, 7
+# The HUD bar spans a corner of the screen and wants the room; the one over a monster's head sits in
+# the middle of a line of text and only has to say roughly how hurt it is, so it is half the length.
+# One width for both put a ruler over every monster in sight.
+HUD_WIDTH, WIDTH, HEIGHT = 76, 38, 7
 STEPS = 10
 FIRST = 0xE010                      # E010..E01A: bars for a monster's name tag
 HUD_FIRST = 0xE020                  # E020..E02A: the same bars, lifted to the top of the screen
@@ -55,13 +58,13 @@ KINDS = {
 }
 
 
-def bar(step, kind="hp", lift=0):
+def bar(step, kind="hp", lift=0, width=WIDTH):
     """One bar, filled step/10 of the way. Flat: one colour, one thin outline, nothing else."""
-    image = Image.new("RGBA", (WIDTH, HEIGHT + lift), (0, 0, 0, 0))
+    image = Image.new("RGBA", (width, HEIGHT + lift), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
-    draw.rectangle([0, 0, WIDTH - 1, HEIGHT - 1], fill=EDGE)
-    draw.rectangle([1, 1, WIDTH - 2, HEIGHT - 2], fill=EMPTY)
-    inner = WIDTH - 2
+    draw.rectangle([0, 0, width - 1, HEIGHT - 1], fill=EDGE)
+    draw.rectangle([1, 1, width - 2, HEIGHT - 2], fill=EMPTY)
+    inner = width - 2
     filled = round(inner * step / STEPS)
     if filled > 0:
         draw.rectangle([1, 1, filled, HEIGHT - 2], fill=KINDS[kind]["fill"])
@@ -77,7 +80,7 @@ def main():
             name = "bar_%s_%02d.png" % (kind, step)
             hud_name = "hud_%s_%02d.png" % (kind, step)
             bar(step, kind).save(os.path.join(TEXTURES, name))
-            bar(step, kind, KINDS[kind]["lift"]).save(os.path.join(TEXTURES, hud_name))
+            bar(step, kind, KINDS[kind]["lift"], HUD_WIDTH).save(os.path.join(TEXTURES, hud_name))
             # once low on the screen, for a monster's name tag (health only), and once high, for the HUD
             if kind == "hp":
                 providers.append({"type": "bitmap", "file": "asuracraft:font/" + name,
