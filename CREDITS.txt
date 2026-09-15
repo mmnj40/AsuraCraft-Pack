@@ -1,6 +1,5 @@
 AsuraCraft resource pack - sound credits
 
-gun/shot.ogg, gun/shot_short.ogg
-  cut from "Gunshots 8.ogg" by aradlaw, via Wikimedia Commons
-  https://commons.wikimedia.org/wiki/File:Gunshots_8.ogg
-  Public domain (from PDSounds.org). No attribution required; recorded here anyway.
+Every sound in assets/asuracraft/sounds is synthesised by make_sounds.py in this repository.
+Nothing is sampled, recorded or taken from another work, so there is nothing to attribute and
+nothing to licence. Re-run make_sounds.py to rebuild the whole set.
