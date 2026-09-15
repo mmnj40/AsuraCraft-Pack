@@ -68,9 +68,23 @@ FAMILIES = {
     "handjet":  pixel("Handjet.ttf", 12),
     "terminal": pixel("VT323-Regular.ttf", 12),
 }
-# every family gets these colours; a bitmap cannot be tinted, so each one is baked
-TONES = {"white": (255, 255, 255, 255), "crit": (255, 198, 64, 255),
-         "hurt": (255, 86, 86, 255), "heal": (126, 240, 130, 255)}
+# Every family gets every one of these. A bitmap cannot be tinted by the server - the picture carries
+# its own colour - so each one is baked, and a colour that is not baked cannot be asked for later.
+#
+# A pair of colours means a gradient down the glyph, which is the one thing a drawn number can do that
+# coloured text cannot: real damage numbers in action games are almost never flat.
+TONES = {
+    "white":   (255, 255, 255, 255),
+    "gold":    (255, 198, 64, 255),
+    "orange":  (255, 122, 41, 255),
+    "magenta": (255, 79, 216, 255),
+    "cyan":    (110, 231, 255, 255),
+    "violet":  (176, 132, 255, 255),
+    "hurt":    (255, 86, 86, 255),
+    "heal":    (126, 240, 130, 255),
+    "fire":    ((255, 236, 120, 255), (255, 72, 32, 255)),
+    "ice":     ((255, 255, 255, 255), (64, 158, 255, 255)),
+}
 BASE = 0xE100          # families and tones are laid out 32 codepoints apart from here
 
 
@@ -96,6 +110,22 @@ def ink_from_ttf(path, character, size):
     return mask.crop(mask.getbbox()) if mask.getbbox() else mask
 
 
+def shade(size, fill):
+    """A flat colour, or a top-to-bottom gradient when two are given."""
+    if not isinstance(fill[0], tuple):
+        return Image.new("RGBA", size, fill)
+    top, bottom = fill
+    band = Image.new("RGBA", size)
+    pixels = band.load()
+    for row in range(size[1]):
+        share = row / max(1, size[1] - 1)
+        pixels[0, row] = tuple(round(top[part] + (bottom[part] - top[part]) * share) for part in range(4))
+    for column in range(1, size[0]):
+        for row in range(size[1]):
+            pixels[column, row] = pixels[0, row]
+    return band
+
+
 def glyph(mask, scale, fill):
     """Scales the ink by a whole number, then rings it in black."""
     if scale != 1:
@@ -106,13 +136,20 @@ def glyph(mask, scale, fill):
     ring = canvas.filter(ImageFilter.MaxFilter(3))
     image = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     image.paste(OUTLINE, mask=ring)
-    image.paste(fill, mask=canvas)
+    image.paste(shade(canvas.size, fill), mask=canvas)
     return image
+
+
+# Each tone gets a block of 32 codepoints and each family gets one block per tone. The stride is
+# computed rather than written down: it was a fixed 128 while there were four tones, and a fifth tone
+# would have quietly walked the next family's glyphs over the last one's.
+STRIDE = 32
+FAMILY_STRIDE = STRIDE * len(TONES)
 
 
 def start_of(family, tone):
     """Where a family and tone begin in the private use area."""
-    return BASE + list(FAMILIES).index(family) * 128 + list(TONES).index(tone) * 32
+    return BASE + list(FAMILIES).index(family) * FAMILY_STRIDE + list(TONES).index(tone) * STRIDE
 
 
 def main():
@@ -156,11 +193,13 @@ def main():
             for name in files:
                 full = os.path.join(folder, name)
                 pack.write(full, os.path.relpath(full, PACK).replace(os.sep, "/"))
-    print("digits", len(GLYPHS) * len(FAMILIES) * len(TONES), "glyphs")
+    print("digits", len(GLYPHS) * len(FAMILIES) * len(TONES), "glyphs,",
+          len(FAMILIES), "families x", len(TONES), "tones")
     for family in FAMILIES:
-        print("  %-7s white U+%04X  crit U+%04X  hurt U+%04X  heal U+%04X" % (
-            family, start_of(family, "white"), start_of(family, "crit"),
-            start_of(family, "hurt"), start_of(family, "heal")))
+        print("  %-9s U+%04X .. U+%04X" % (
+            family, start_of(family, list(TONES)[0]),
+            start_of(family, list(TONES)[-1]) + len(GLYPHS) - 1))
+    print("  stride: %d per family" % FAMILY_STRIDE)
 
 
 if __name__ == "__main__":
