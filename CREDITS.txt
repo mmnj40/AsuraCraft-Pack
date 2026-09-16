@@ -1,5 +1,25 @@
 AsuraCraft resource pack - sound credits
 
-Every sound in assets/asuracraft/sounds is synthesised by make_sounds.py in this repository.
-Nothing is sampled, recorded or taken from another work, so there is nothing to attribute and
-nothing to licence. Re-run make_sounds.py to rebuild the whole set.
+The gunshots and mechanical weapon sounds in assets/asuracraft/sounds/gun are edited from
+recordings published by BigSoundBank (https://bigsoundbank.com) under CC0 1.0 Universal
+(public domain dedication): free for any use, commercial included, no attribution required.
+Credited here regardless.
+
+  0437   Beretta M12, 9mm, one shot
+  0438   .357 Magnum, one shot
+  0397   Winchester Magnum XTR, one shot
+  2853   rifle, one shot
+  2854   rifle, one shot, second take
+  0532   shotgun, five shots
+  1984   pistol cocking, slow, two movements
+  1985   pistol cocking, fast
+  1986   pistol cocking, fast, second take
+  1988   magazine seated
+  1990   magazine seated, heavier
+  1357   9mm case falling on concrete
+
+Editing - trimming, pitch shifting, filtering, echo and normalisation - is done by
+make_sounds.py in this repository with ffmpeg. Re-run it to rebuild the set.
+
+Everything else under assets/asuracraft/sounds (medicine, building, the infected) is
+synthesised by make_extra_sounds.py and is not taken from any recording.

@@ -1,27 +1,37 @@
 # -*- coding: utf-8 -*-
-"""Builds the guns as real three-dimensional models, the way Blockbench writes them.
+"""Builds the guns, drawn as pixel art and extruded into the item JSON Minecraft reads.
 
-A Blockbench model is not a special format - it is the same item JSON Minecraft has always read, with
-an "elements" list of boxes instead of a flat sprite. So a gun can be built here, box by box, and it
-will open in Blockbench afterwards for anyone who wants to push a barrel a pixel to the left.
+The first two attempts at these placed a dozen large boxes by hand and then argued about the texture.
+Both looked like boxes, because they were. The models people admire - the ones that read as a real
+firearm at a glance - are not a dozen boxes; they are a couple of hundred one-pixel steps that add up
+to a curve, a taper and a trigger guard you could put a finger through. Nobody places those by hand
+either. They are drawn, in two dimensions, and the third is an extrusion.
 
-The first version of this file textured every face from a sixteen colour palette, one flat colour per
-face, and it looked like it: a shape with no surface. The models people admire are not made of more
-boxes than these - look closely at any of them and the boxes are just as few and just as square - they
-are made of boxes whose faces have been *painted*. A slide has serrations cut across it, a grip has a
-chequered panel, wood has grain running along it, every edge catches a little light at the top and
-loses it at the bottom. That is the whole difference, and it is done here rather than by hand: each box
-is given its own patch of the gun's own texture, and each of its six faces is painted into that patch
-with the shading and the detail that face should carry.
+So that is what this is. Each gun is a side view drawn in ASCII at one character per model unit -
+a pistol is twenty-six units long, a rifle forty-six - where every character names a material. That
+grid is then:
 
-Model space is sixteen units to a block, x running along the barrel with the muzzle at +x, y up, and z
-across. The display transform then turns that to point where the player is looking.
+  1. merged      into the largest rectangles of one material that will fit, so a hundred and eighty
+                 pixels become forty-odd boxes rather than a hundred and eighty
+  2. extruded    to each material's own thickness: a slide is wide, a barrel is narrow, a sight is a
+                 blade, a grip panel is a skin on the outside of the grip
+  3. painted     face by face into the gun's own texture - serrations across a slide, chequering on a
+                 grip, grain along wood, a lit top edge and a dark underside on everything
+
+The drawing is the part a person can judge. Run this file with --profile and it writes the side views
+out as a picture; if the silhouette is wrong there, no amount of texturing will save it, and if it is
+right there the model is right.
+
+Model space is sixteen units to a block, x running along the barrel with the muzzle at +x, y up, z
+across. Minecraft allows element coordinates from -16 to 32, which is where the forty-eight unit
+ceiling on gun length comes from.
 """
 import io
 import json
 import math
 import os
 import random
+import sys
 
 from PIL import Image
 
@@ -31,36 +41,305 @@ ITEMS = os.path.join(PACK, "assets", "asuracraft", "items")
 MODELS = os.path.join(PACK, "assets", "asuracraft", "models", "item")
 TEXTURES = os.path.join(PACK, "assets", "asuracraft", "textures", "item")
 
-SIZE = 256          # the texture each gun gets to itself
+SIZE = 512          # the texture each gun gets to itself
+LIMIT = 32.0        # the furthest a model element may reach
+FLOOR = -16.0
 
-# The materials. Colour, and how the surface is finished - which is the part that was missing.
+# ---------------------------------------------------------------- materials
+#
+# colour, finish, and how thick the part is across the gun. Thickness is what turns a flat drawing into
+# an object: the slide is the widest thing on a pistol, the barrel is narrower, a sight is a blade and
+# a grip panel is a two-tenths skin stuck on the outside of the grip.
 MATERIALS = {
-    "steel":    ((84, 90, 102),   "brushed"),
-    "steel_d":  ((52, 57, 66),    "brushed"),
-    "steel_l":  ((122, 130, 146), "brushed"),
-    "slide":    ((74, 80, 92),    "serrate"),
-    "black":    ((26, 27, 32),    "grit"),
-    "poly":     ((38, 40, 46),    "checker"),
-    "rubber":   ((30, 31, 36),    "checker"),
-    "wood":     ((122, 82, 48),   "grain"),
-    "wood_d":   ((84, 55, 31),    "grain"),
-    "wood_l":   ((156, 110, 64),  "grain"),
-    "brass":    ((198, 158, 72),  "brushed"),
-    "glass":    ((146, 208, 240), "glass"),
-    "red":      ((150, 52, 44),   "flat"),
-    "bright":   ((148, 155, 168), "brushed"),
-    "grey":     ((96, 102, 114),  "brushed"),
+    #          colour               finish      z0     z1
+    "s": ((78, 84, 96),    "brushed", 5.0, 11.0),   # slide / receiver
+    "z": ((74, 80, 92),    "serrate", 5.0, 11.0),   # the cut serrations at the back of a slide
+    "t": ((116, 124, 140), "brushed", 5.2, 10.8),   # slide top rib
+    "f": ((58, 63, 72),    "brushed", 5.3, 10.7),   # frame
+    "b": ((28, 29, 34),    "grit",    6.4, 9.6),    # barrel, muzzle
+    "n": ((40, 43, 50),    "brushed", 6.0, 10.0),   # heavy barrel / shroud
+    "p": ((40, 42, 48),    "checker", 5.2, 10.8),   # grip
+    "k": ((52, 57, 66),    "brushed", 7.0, 9.0),    # trigger guard
+    "x": ((26, 27, 32),    "grit",    7.1, 8.9),    # trigger
+    "i": ((24, 25, 30),    "grit",    7.2, 8.8),    # iron sight
+    "r": ((150, 52, 44),   "flat",    4.9, 11.1),   # a painted marking
+    "l": ((150, 157, 170), "brushed", 4.7, 11.3),   # lever, catch, bolt release
+    "m": ((26, 27, 32),    "grit",    6.2, 9.8),    # magazine floor plate
+    "d": ((54, 59, 68),    "brushed", 6.2, 9.8),    # magazine body
+    "R": ((24, 25, 30),    "checker", 6.2, 9.8),    # rail
+    "H": ((34, 36, 42),    "brushed", 5.8, 10.2),   # handguard
+    "V": ((20, 21, 26),    "grit",    5.6, 10.4),   # vent slot cut into a handguard
+    "A": ((46, 49, 56),    "brushed", 5.4, 10.6),   # stock
+    "P": ((24, 25, 30),    "checker", 5.2, 10.8),   # butt pad
+    "W": ((124, 84, 48),   "grain",   5.2, 10.8),   # wood
+    "w": ((86, 57, 32),    "grain",   5.0, 11.0),   # dark wood
+    "S": ((48, 52, 60),    "brushed", 5.6, 10.4),   # scope tube
+    "N": ((40, 44, 52),    "brushed", 6.6, 9.4),    # scope mount
+    "L": ((148, 210, 242), "glass",   6.2, 9.8),    # lens
+    "B": ((140, 147, 160), "brushed", 6.8, 11.8),   # bolt handle, proud on one side
+    "e": ((196, 158, 74),  "brushed", 6.6, 9.4),    # brass
+    "o": ((36, 39, 46),    "brushed", 6.6, 9.4),    # cylinder
 }
 
 # How much light each face is given. The gun is lit from above and a little from the muzzle end, which
 # is what stops a box from reading as a single grey lump.
-LIGHT = {"up": 1.20, "down": 0.52, "north": 1.02, "south": 0.90, "east": 1.10, "west": 0.74}
+LIGHT = {"up": 1.22, "down": 0.50, "north": 1.03, "south": 0.88, "east": 1.12, "west": 0.72}
 
 
 def shade(colour, factor):
     return tuple(max(0, min(255, int(round(channel * factor)))) for channel in colour)
 
 
+# ---------------------------------------------------------------- the drawings
+#
+# One character per model unit, muzzle to the right, top row first. Everything up to and including the
+# leading pipe is stripped, so the art can be indented to sit neatly in the file.
+GUNS = {}
+
+
+def gun(name, art):
+    rows = [line for line in art.strip("\n").split("\n")]
+    rows = [row[row.index("|") + 1:] if "|" in row else row for row in rows]
+    width = max(len(row) for row in rows)
+    GUNS[name] = [row.ljust(width, ".") for row in rows]
+
+
+gun("pistol", """
+    |..........................
+    |..........................
+    |....i................i....
+    |..tttttttttttttttttttt....
+    |..zzzzzzzsssssssssssss....
+    |..zzzzzzzssssssssssssbbbb.
+    |..zzzzzzzrssssslsssssbbbb.
+    |..zzzzzzzsssssssssssss....
+    |...ffffffffffffffffff.....
+    |...ffffffffffffffffff.....
+    |...fffffffffffffRRRRR.....
+    |..ppppppp..kx..k..........
+    |..ppppppp..kx..k..........
+    |.ppppppp...kkkkk..........
+    |.ppppppp..................
+    |ppppppp...................
+    |ppppppp...................
+    |mmmmmmm...................
+""")
+
+gun("magnum", """
+    |..........................
+    |......i...............i...
+    |......tttttttttttttttt....
+    |......ssssssssssssssssbbbb
+    |.....sssssssssssssssssbbbb
+    |.....ssooooosssssssssss...
+    |.....ffooooofffff.........
+    |.....ffooooofff...........
+    |....ppffffffff............
+    |....ppppp.kx.k............
+    |....ppppp.kx.k............
+    |...ppppp..kkkk............
+    |...ppppp..................
+    |..ppppp...................
+    |..ppppp...................
+    |..ppppp...................
+    |...mmm....................
+""")
+
+gun("deagle", """
+    |..............................
+    |..............................
+    |.....i....................i...
+    |...tttttttttttttttttttttttt...
+    |...zzzzzzzzsssssssssssssssss..
+    |...zzzzzzzzssssssssssssssssbbb
+    |...zzzzzzzzrsssssslssssssssbbb
+    |...zzzzzzzzsssssssssssssssss..
+    |...ffffffffffffffffffffffff...
+    |...ffffffffffffffffffRRRRRR...
+    |..pppppppp..kx..k.............
+    |..pppppppp..kx..k.............
+    |..pppppppp..kkkkk.............
+    |.pppppppp.....................
+    |.pppppppp.....................
+    |pppppppp......................
+    |pppppppp......................
+    |mmmmmmmm......................
+""")
+
+gun("smg", """
+    |..................................
+    |..........i.............i.........
+    |..........i.............ii........
+    |........RRRRRRRRRRRR....ii........
+    |PPssssssssssssssssssss..HHHH......
+    |PPssssssssssssssssssss.HHHHHH.....
+    |PPsssssssssssssssssssssHVHVHHnnnnn
+    |PPsssssssssssssssssssssHVHVHHnnnnn
+    |PPssssssssssssssssssssslHHHHHnnnnn
+    |PPffffffffffffffffffff..HHHH......
+    |..fffffffffffffffffff.............
+    |....ppppp.ddddd.k.................
+    |....ppppp.ddddd.k.................
+    |...ppppp..ddddd.k.................
+    |...ppppp..dddddkk.................
+    |..ppppp...ddddd...................
+    |..ppppp...ddddd...................
+    |..ppppp...mmmmm...................
+""")
+
+gun("rifle", """
+    |..............................................
+    |..............................................
+    |.......i.........................i............
+    |......RRRRRRRRRRRRRRRRRRRRRRRRR..i............
+    |PPAAAAssssssssssssssssssssss..HHHHHH..........
+    |PPAAAAsssssssssssssssssssssssHHHHHHHHnnnnnnbbb
+    |PPAAAAssssssssssssssssssssssHVHVHVHVHnnnnnnbbb
+    |PPAAAAsssssssssssssssssssssslHVHVHVHHnnnnnnbbb
+    |PPAAAAssssssssssssssssssssssHHHHHHHHHnnnnnnbbb
+    |PPAAAAffffffffffffffffffffff..HHHHHH..........
+    |..AAAAfffffffffffffffffffff...................
+    |.......ppppp..ddddddd.k.......................
+    |.......ppppp..ddddddd.k.......................
+    |......ppppp...ddddddd.k.......................
+    |......ppppp...dddddddkk.......................
+    |.....ppppp.....ddddddd........................
+    |.....ppppp.....ddddddd........................
+    |.....ppppp......mmmmm.........................
+""")
+
+gun("ak", """
+    |..............................................
+    |..............................................
+    |.......i..........................i...........
+    |.......i..........................i...........
+    |wwwwwwwsssssssssssssssssssss..WWWWWW..........
+    |wwwwwwwssssssssssssssssssssssWWWWWWWWnnnnnnbbb
+    |wwwwwwwsssssssssssssssssssssBWWWWWWWWnnnnnnbbb
+    |wwwwwwwssssssssssssssssssssssWWWWWWWWnnnnnnbbb
+    |.wwwwwwffffffffffffffffffffff.WWWWWW..........
+    |..wwwwwffffffffffffffffffff...................
+    |...wwww.ppppp..ddddddd.k......................
+    |........ppppp..ddddddd.k......................
+    |.......ppppp....ddddddd.k.....................
+    |.......ppppp.....dddddddkk....................
+    |......ppppp.......ddddddd.....................
+    |......ppppp........ddddddd....................
+    |.....ppppp..........mmmmmm....................
+""")
+
+gun("sniper", """
+    |..........SSSSSSSSSSSSSSSSSSSSSS
+    |.........LSSSSSSSSSSSSSSSSSSSSSSL
+    |..........SSSSSSSSSSSSSSSSSSSSSS
+    |..........NNN.............NNN
+    |..........NNN.............NNN
+    |PPWWWWWWWWssssssssssssssssssssnnnnnnnnnnnnbbbb
+    |PPWWWWWWWWssssssssssssssssssssnnnnnnnnnnnnbbbb
+    |PPWWWWWWWWsssssssssssssssssBssnnnnnnnnnnnnbbbb
+    |PPWWWWWWWWssssssssssssssssssssnnnnnnnnnnnnbbbb
+    |PPWWWWWWWWffffffffffffWWWWWWWWWWWWWWWWWW
+    |..WWWWWWWWffffffffffffWWWWWWWWWWWWWWWWWW
+    |...WWWWWWW.ddddd.k....WWWWWWWWWWWWWWWW
+    |....pppp...ddddd.k
+    |....pppp...ddddd.k
+    |...pppp....dddddkk
+    |...pppp....mmmmm
+    |..pppp
+""")
+
+gun("shotgun", """
+    |..............................................
+    |...........................................e..
+    |PPWWWWWWWW....................................
+    |PPWWWWWWWWssssssssnnnnnnnnnnnnnnnnnnnnnnnnnbbb
+    |PPWWWWWWWWssssssssnnnnnnnnnnnnnnnnnnnnnnnnnbbb
+    |PPWWWWWWWWssssssssnnnnnnnnnnnnnnnnnnnnnnnnnbbb
+    |PPWWWWWWWWssssssssdddddddddddddddddddddddd....
+    |..WWWWWWWWffffffffdddddddddddddddddddddddd....
+    |...WWWWWWWfffffff.WWWWWWWWWWWWWWWWWWWW........
+    |....WWWWWW.k.k....WwWWwWWwWWwWWwWWwWWWW.......
+    |....WWWWWW.kxk....WWWWWWWWWWWWWWWWWWWW........
+    |...WWWWWW..kkk................................
+    |...WWWWWW.....................................
+    |..WWWWWW......................................
+    |..WWWWWW......................................
+    |.PWWWWW.......................................
+    |.PPPPPP.......................................
+""")
+
+
+# ---------------------------------------------------------------- merging the drawing into boxes
+def rectangles(rows):
+    """The fewest rectangles of one material each that cover the drawing.
+
+    Greedy and good enough: take the first unclaimed pixel, run right while the material holds, then
+    run down while the whole width still holds. A pistol drops from a hundred and eighty pixels to
+    about forty boxes, which is what keeps the model a sensible size.
+    """
+    height = len(rows)
+    width = len(rows[0])
+    taken = [[False] * width for _ in range(height)]
+    out = []
+    for y in range(height):
+        for x in range(width):
+            material = rows[y][x]
+            if material == "." or taken[y][x]:
+                continue
+            span = 1
+            while (x + span < width and rows[y][x + span] == material
+                   and not taken[y][x + span]):
+                span += 1
+            deep = 1
+            while y + deep < height:
+                row = rows[y + deep]
+                if any(row[x + step] != material or taken[y + deep][x + step]
+                       for step in range(span)):
+                    break
+                deep += 1
+            for down in range(deep):
+                for step in range(span):
+                    taken[y + down][x + step] = True
+            out.append((material, x, y, span, deep))
+    return bevel(rows, out)
+
+
+def bevel(rows, boxes):
+    """Shaves the exposed top and bottom edge of every part in by half a unit.
+
+    A slab six units thick with square corners is the thing that makes a model read as a box rather
+    than as an object, and no texture fixes it. Real weapons are radiused everywhere; one chamfered
+    pixel along each exposed edge is enough to suggest it, and costs a handful of extra elements.
+
+    Only edges with nothing above or below them are shaved - an edge with another part against it is
+    inside the gun, and chamfering it would open a seam.
+    """
+    height = len(rows)
+    width = len(rows[0])
+
+    def solid(x, y):
+        return 0 <= y < height and 0 <= x < width and rows[y][x] != "."
+
+    out = []
+    for material, x, y, span, deep in boxes:
+        top = not any(solid(x + step, y - 1) for step in range(span))
+        bottom = not any(solid(x + step, y + deep) for step in range(span))
+        # A one-unit part that is exposed on both sides is chamfered once, as a whole.
+        if deep == 1 and (top or bottom):
+            out.append((material, x, y, span, deep, 0.5))
+            continue
+        if top:
+            out.append((material, x, y, span, 1, 0.5))
+            y, deep = y + 1, deep - 1
+        if bottom and deep > 0:
+            out.append((material, x, y + deep - 1, span, 1, 0.5))
+            deep -= 1
+        if deep > 0:
+            out.append((material, x, y, span, deep, 0.0))
+    return out
+
+
+# ---------------------------------------------------------------- the texture
 class Atlas:
     """A shelf packer. Every face of every box gets its own rectangle, so every face can be painted."""
 
@@ -93,279 +372,171 @@ def finish(atlas, spot, width, height, base, kind, face, rng):
     for row in range(height):
         for column in range(width):
             colour = lit
-
             if kind == "brushed":
-                # Drawn metal keeps faint lengthways streaks, and they tell the eye it is metal.
-                colour = shade(colour, 1.0 + 0.022 * math.sin(row * 2.3) + rng.uniform(-0.012, 0.012))
+                colour = shade(colour, 1.0 + 0.020 * math.sin(row * 2.3)
+                               + rng.uniform(-0.012, 0.012))
             elif kind == "grit":
-                colour = shade(colour, 1.0 + rng.uniform(-0.10, 0.10))
+                colour = shade(colour, 1.0 + rng.uniform(-0.09, 0.09))
             elif kind == "serrate":
-                # Slide serrations: cut across the rear third, which is exactly where a thumb goes.
-                if column < width * 0.42 and column % 3 == 0:
-                    colour = shade(colour, 0.66)
-                elif column < width * 0.42 and column % 3 == 1:
-                    colour = shade(colour, 1.14)
+                if column % 3 == 0:
+                    colour = shade(colour, 0.72)
+                elif column % 3 == 1:
+                    colour = shade(colour, 1.10)
                 else:
                     colour = shade(colour, 1.0 + rng.uniform(-0.02, 0.02))
             elif kind == "checker":
-                # The chequering on a grip panel - two pixels on, two off, which at this size reads as
-                # texture rather than as a pattern.
-                colour = shade(colour, 1.16 if ((column // 2) + (row // 2)) % 2 == 0 else 0.84)
+                colour = shade(colour, 1.09 if ((column // 2) + (row // 2)) % 2 == 0 else 0.91)
             elif kind == "grain":
                 streak = math.sin(row * 1.9 + math.sin(row * 0.7) * 2.0)
-                colour = shade(colour, 1.0 + 0.11 * streak + rng.uniform(-0.03, 0.03))
+                colour = shade(colour, 1.0 + 0.10 * streak + rng.uniform(-0.03, 0.03))
             elif kind == "glass":
-                # A lens: bright in one corner, dark away from it.
                 across = (column / max(1.0, width - 1.0)) - 0.35
                 down = (row / max(1.0, height - 1.0)) - 0.3
-                colour = shade(colour, 1.25 - 0.75 * min(1.0, across * across + down * down) ** 0.5)
+                colour = shade(colour, 1.28 - 0.80 * min(1.0, across * across + down * down) ** 0.5)
 
             # The bevel. A lighter pixel along the top and a darker one along the bottom is the cheapest
             # thing in this file and does more for the shape than any extra box would.
             if not flat:
                 if row == 0:
-                    colour = shade(colour, 1.22)
+                    colour = shade(colour, 1.20)
                 elif row == height - 1:
-                    colour = shade(colour, 0.70)
-            if column == 0 or column == width - 1:
-                colour = shade(colour, 0.90)
-
+                    colour = shade(colour, 0.74)
             atlas.pixels[spot[0] + column, spot[1] + row] = colour + (255,)
 
 
-def box(x0, y0, z0, x1, y1, z1, material, top=None, deco=None):
-    """One cuboid, held as numbers until an atlas exists to paint it into."""
-    return {"box": (x0, y0, z0, x1, y1, z1), "material": material, "top": top, "deco": deco}
+# ---------------------------------------------------------------- the model
+def elements(rows, atlas, rng):
+    """Every rectangle of the drawing, extruded and painted."""
+    height = len(rows)
+    width = len(rows[0])
+    # Centred on the block so the display transform turns it about its own middle, and shifted far
+    # enough back that a long rifle still fits inside the coordinates a model is allowed to use.
+    offset = max(FLOOR + 1, min(8.0 - width / 2.0, LIMIT - width - 1))
+    rise = 3.0
+
+    out = []
+    for material, x, y, span, deep, inset in rectangles(rows):
+        colour, kind, z0, z1 = MATERIALS[material]
+        # Never shave a part thinner than a unit and a half - a sight blade chamfered by half a unit
+        # on each side would have almost nothing left of it.
+        if z1 - z0 > 1.5:
+            z0, z1 = z0 + inset, z1 - inset
+        x0 = offset + x
+        x1 = x0 + span
+        y1 = rise + (height - y)
+        y0 = y1 - deep
+
+        faces = {}
+        for face in ("north", "south", "east", "west", "up", "down"):
+            if face in ("north", "south"):
+                units = (span, deep)
+            elif face in ("east", "west"):
+                units = (z1 - z0, deep)
+            else:
+                units = (span, z1 - z0)
+            pixels_wide = max(1, int(round(units[0] * atlas.scale)))
+            pixels_high = max(1, int(round(units[1] * atlas.scale)))
+            spot = atlas.place(pixels_wide, pixels_high)
+            finish(atlas, spot, pixels_wide, pixels_high, colour, kind, face, rng)
+            faces[face] = {"uv": atlas.uv(spot, pixels_wide, pixels_high), "texture": "#t"}
+
+        out.append({"from": [round(x0, 2), round(y0, 2), z0],
+                    "to": [round(x1, 2), round(y1, 2), z1],
+                    "faces": faces})
+    return out
 
 
-def build(part, atlas, rng):
-    """Turns one held cuboid into a model element, painting its six faces on the way past."""
-    x0, y0, z0, x1, y1, z1 = part["box"]
-    across, tall, deep = x1 - x0, y1 - y0, z1 - z0
-    faces = {}
-    for face in ("north", "south", "east", "west", "up", "down"):
-        material = part["material"]
-        if face == "up" and part["top"]:
-            material = part["top"]
-        base, kind = MATERIALS[material]
-        if part["deco"] and face in ("north", "south", "up"):
-            kind = part["deco"]
+def display(length, tilt=0.0, drop=0.0):
+    """A quarter turn takes the muzzle - which is +x - and points it where the player is looking.
 
-        if face in ("north", "south"):
-            units = (across, tall)
-        elif face in ("east", "west"):
-            units = (deep, tall)
-        else:
-            units = (across, deep)
-        width = max(1, int(round(units[0] * atlas.scale)))
-        height = max(1, int(round(units[1] * atlas.scale)))
-
-        spot = atlas.place(width, height)
-        finish(atlas, spot, width, height, base, kind, face, rng)
-        faces[face] = {"uv": atlas.uv(spot, width, height), "texture": "#t"}
-    return {"from": [x0, y0, z0], "to": [x1, y1, z1], "faces": faces}
-
-
-# Each gun: a list of boxes, built lying along x with the muzzle to the right. A trigger guard is three
-# thin bars rather than one block, so there is a real hole for a finger; a grip is a short stack of
-# boxes stepped backwards, which is how a slanted grip is made out of square things.
-GUNS = {
-    # A pistol built the way the reference is: a slide with serrations, a frame under it, a grip made of
-    # three boxes stepped backwards so it leans, and small hard parts - sights, lever, hammer - for the
-    # eye to catch on.
-    "pistol": [
-        box(4.6, 8.2, 6.6, 13.2, 11.0, 9.4, "slide", top="steel_l"),      # slide
-        box(4.6, 10.6, 6.5, 13.2, 11.1, 9.5, "steel_l"),                  # top rib
-        box(8.6, 9.4, 9.4, 11.4, 10.4, 9.6, "black"),                     # ejection port
-        box(12.9, 9.0, 7.2, 14.1, 10.4, 8.8, "black"),                    # muzzle
-        box(13.6, 9.3, 7.5, 14.2, 10.1, 8.5, "steel_d"),                  # crown
-        box(4.9, 5.4, 6.9, 12.6, 8.3, 9.1, "steel_d", top="steel"),       # frame
-        box(11.2, 5.6, 6.8, 12.8, 7.4, 9.2, "black", deco="checker"),     # accessory rail
-        box(7.4, 8.4, 6.5, 8.2, 9.2, 9.5, "red"),                         # marking
-        box(9.6, 8.5, 6.4, 10.2, 9.1, 9.6, "bright"),                     # slide-stop lever
-        box(4.4, 4.2, 6.9, 7.9, 5.6, 9.1, "poly"),                        # grip, leaning back
-        box(3.9, 2.6, 6.9, 7.4, 4.3, 9.1, "poly"),
-        box(3.4, 1.0, 6.9, 6.9, 2.7, 9.1, "poly"),
-        box(3.2, 0.6, 6.8, 7.0, 1.2, 9.2, "black"),                       # magazine floor
-        box(3.3, 1.1, 6.75, 6.9, 5.4, 6.95, "rubber", deco="checker"),    # chequered panels
-        box(3.3, 1.1, 9.05, 6.9, 5.4, 9.25, "rubber", deco="checker"),
-        box(7.6, 5.0, 7.3, 8.4, 5.6, 8.7, "steel_d"),                     # guard, front bar
-        box(7.6, 3.9, 7.3, 10.6, 4.6, 8.7, "steel_d"),                    # guard, bottom bar
-        box(10.0, 4.4, 7.3, 10.8, 5.5, 8.7, "steel_d"),                   # guard, rear joint
-        box(8.4, 4.6, 7.5, 9.1, 5.6, 8.5, "black"),                       # trigger
-        box(12.1, 11.0, 7.6, 12.7, 11.9, 8.4, "black"),                   # front sight
-        box(5.0, 11.0, 7.0, 5.7, 11.9, 9.0, "black"),                     # rear sight
-        box(5.0, 11.0, 7.8, 5.7, 11.9, 8.2, "steel_d"),                   # its notch
-        box(4.2, 8.6, 7.4, 4.9, 9.8, 8.6, "steel_d"),                     # hammer
-    ],
-    # Everything longer than a pistol is laid out in the same order along x, tail to nose, with nothing
-    # buried inside anything else: butt, stock, receiver, handguard, barrel, muzzle. That one rule is
-    # what the first draft of these was missing and why they read as a pile of blocks.
-    "smg": [
-        box(0.0, 8.4, 6.9, 0.7, 11.2, 9.1, "black", deco="checker"),      # butt pad
-        box(0.7, 9.0, 7.4, 2.4, 10.4, 8.6, "steel_d"),                    # folding stock arm
-        box(2.4, 8.2, 6.6, 10.0, 11.0, 9.4, "slide", top="steel_l"),      # receiver
-        box(2.6, 11.0, 7.2, 9.8, 11.6, 8.8, "black", deco="checker"),     # top rail
-        box(10.0, 8.4, 6.8, 13.0, 10.6, 9.2, "black"),                    # handguard
-        box(10.3, 8.9, 6.7, 12.7, 10.1, 6.85, "steel_d", deco="checker"), # its vents
-        box(10.3, 8.9, 9.15, 12.7, 10.1, 9.3, "steel_d", deco="checker"),
-        box(13.0, 9.2, 7.4, 15.0, 10.2, 8.6, "steel_d"),                  # barrel
-        box(15.0, 9.0, 7.2, 15.7, 10.4, 8.8, "black"),                    # muzzle
-        box(7.0, 5.0, 7.4, 8.6, 8.2, 8.6, "steel_d", top="steel"),        # magazine
-        box(7.2, 2.2, 7.4, 8.8, 5.2, 8.6, "steel_d"),                     # its lower half, forward
-        box(7.05, 5.1, 7.3, 8.55, 8.1, 7.45, "black", deco="checker"),    # its ribs
-        box(7.0, 1.7, 7.3, 9.0, 2.4, 8.7, "black"),                       # floor plate
-        box(4.6, 4.6, 7.0, 6.6, 8.2, 9.0, "poly", deco="checker"),        # grip
-        box(4.4, 2.8, 7.0, 6.4, 4.8, 9.0, "poly", deco="checker"),
-        box(4.3, 2.3, 6.9, 6.5, 3.0, 9.1, "black"),
-        box(6.5, 6.4, 7.4, 7.1, 8.2, 8.6, "steel_d"),                     # guard, front
-        box(6.5, 5.7, 7.4, 9.0, 6.5, 8.6, "steel_d"),                     # guard, bottom
-        box(7.2, 6.4, 7.6, 7.9, 7.4, 8.4, "black"),                       # trigger
-        box(8.6, 9.4, 6.3, 9.8, 10.2, 6.6, "bright"),                     # charging handle
-        box(12.5, 11.0, 7.6, 13.1, 12.6, 8.4, "black"),                   # front post
-        box(12.4, 12.4, 7.5, 13.2, 12.8, 8.5, "steel_d"),                 # its hood
-        box(3.0, 11.6, 7.4, 3.6, 12.8, 8.6, "black"),                     # rear aperture
-        box(3.0, 11.6, 7.85, 3.6, 12.8, 8.15, "steel_d"),
-    ],
-    "rifle": [
-        box(0.0, 7.6, 6.8, 0.7, 11.4, 9.2, "black", deco="checker"),      # butt pad
-        box(0.7, 8.0, 7.0, 3.2, 11.2, 9.0, "steel_d", top="steel"),       # stock
-        box(1.0, 7.6, 7.4, 3.0, 8.2, 8.6, "black"),                       # its underside
-        box(3.2, 8.0, 6.6, 9.8, 11.2, 9.4, "slide", top="steel_l"),       # receiver
-        box(3.4, 11.2, 7.2, 13.0, 11.8, 8.8, "black", deco="checker"),    # rail, full length
-        box(9.8, 8.4, 6.8, 13.2, 10.8, 9.2, "black"),                     # handguard
-        box(10.1, 8.9, 6.7, 12.9, 10.3, 6.85, "steel_d", deco="checker"), # its vents
-        box(10.1, 8.9, 9.15, 12.9, 10.3, 9.3, "steel_d", deco="checker"),
-        box(13.2, 9.2, 7.4, 15.2, 10.2, 8.6, "steel_d"),                  # barrel
-        box(15.2, 9.0, 7.2, 16.0, 10.4, 8.8, "black", deco="checker"),    # flash hider
-        box(12.8, 10.8, 7.5, 13.4, 13.0, 8.5, "black"),                   # gas block and front post
-        box(12.7, 12.8, 7.4, 13.5, 13.2, 8.6, "steel_d"),
-        box(3.6, 11.8, 7.4, 4.2, 13.0, 8.6, "black"),                     # rear aperture
-        box(3.6, 11.8, 7.85, 4.2, 13.0, 8.15, "steel_d"),
-        box(7.2, 5.0, 7.3, 8.8, 8.0, 8.7, "steel_d", top="steel"),        # magazine
-        box(7.5, 2.6, 7.3, 9.1, 5.2, 8.7, "steel_d"),                     # its curve
-        box(7.9, 1.4, 7.3, 9.5, 2.9, 8.7, "steel_d"),
-        box(7.25, 5.1, 7.2, 8.75, 7.9, 7.35, "black", deco="checker"),
-        box(4.4, 4.6, 7.0, 6.4, 8.0, 9.0, "poly", deco="checker"),        # grip
-        box(4.2, 2.8, 7.0, 6.2, 4.8, 9.0, "poly", deco="checker"),
-        box(4.1, 2.3, 6.9, 6.3, 3.0, 9.1, "black"),
-        box(6.4, 6.4, 7.4, 7.0, 8.0, 8.6, "steel_d"),                     # guard, front
-        box(6.4, 5.7, 7.4, 9.0, 6.5, 8.6, "steel_d"),                     # guard, bottom
-        box(7.1, 6.4, 7.6, 7.8, 7.4, 8.4, "black"),                       # trigger
-        box(8.6, 9.6, 9.4, 9.8, 10.6, 9.6, "black"),                      # ejection port cover
-        box(9.2, 10.4, 6.4, 9.9, 11.0, 6.6, "bright"),                    # forward assist
-    ],
-    "sniper": [
-        box(0.0, 7.0, 6.7, 0.8, 11.4, 9.3, "black", deco="checker"),      # recoil pad
-        box(0.8, 7.2, 6.8, 3.4, 11.2, 9.2, "wood", top="wood_l"),         # butt stock
-        box(2.0, 11.2, 6.9, 4.6, 12.1, 9.1, "wood_l"),                    # comb
-        box(3.2, 5.6, 7.0, 5.8, 8.6, 9.0, "wood", top="wood_d"),          # wrist
-        box(3.3, 5.5, 6.95, 5.7, 8.0, 7.1, "wood_d", deco="checker"),     # chequering
-        box(3.3, 5.5, 8.9, 5.7, 8.0, 9.05, "wood_d", deco="checker"),
-        box(3.4, 8.4, 6.7, 10.0, 11.0, 9.3, "slide", top="steel_l"),      # receiver
-        box(10.0, 9.0, 7.3, 15.0, 10.4, 8.7, "steel_d"),                  # heavy barrel
-        box(15.0, 8.8, 7.2, 16.0, 10.6, 8.8, "black"),                    # muzzle brake
-        box(15.2, 9.3, 7.0, 15.8, 10.1, 9.0, "steel_d"),                  # its ports
-        box(10.0, 7.8, 6.9, 13.2, 9.2, 9.1, "wood", top="wood_l"),        # forend
-        box(10.1, 7.7, 6.85, 13.1, 8.2, 9.15, "wood_d"),
-        box(4.6, 12.2, 7.0, 11.4, 14.2, 9.0, "steel_d", top="steel"),     # scope tube
-        box(4.2, 12.0, 6.8, 5.2, 14.4, 9.2, "black"),                     # eyepiece bell
-        box(10.8, 12.0, 6.8, 11.8, 14.4, 9.2, "black"),                   # objective bell
-        box(4.15, 12.3, 7.1, 4.3, 14.2, 8.9, "glass"),                    # the lenses
-        box(11.7, 12.3, 7.1, 11.85, 14.2, 8.9, "glass"),
-        box(7.2, 14.2, 7.6, 8.4, 14.9, 8.4, "black", deco="checker"),     # elevation turret
-        box(7.8, 12.8, 9.0, 8.6, 13.6, 9.6, "black", deco="checker"),     # windage turret
-        box(5.4, 11.0, 7.5, 6.2, 12.3, 8.5, "steel_d"),                   # mounts
-        box(9.6, 11.0, 7.5, 10.4, 12.3, 8.5, "steel_d"),
-        box(6.6, 4.4, 7.3, 8.4, 8.4, 8.7, "steel_d", top="steel"),        # short magazine
-        box(6.5, 3.8, 7.2, 8.5, 4.6, 8.8, "black"),
-        box(5.8, 7.0, 7.4, 6.4, 8.4, 8.6, "steel_d"),                     # guard, front
-        box(5.8, 6.3, 7.4, 8.4, 7.1, 8.6, "steel_d"),                     # guard, bottom
-        box(6.5, 7.0, 7.6, 7.2, 7.9, 8.4, "black"),                       # trigger
-        box(8.4, 10.2, 9.3, 10.0, 10.9, 9.5, "bright"),                   # bolt body
-        box(9.4, 9.8, 9.5, 10.0, 10.6, 10.4, "bright"),                   # bolt handle
-        box(9.9, 9.5, 10.2, 10.3, 10.3, 10.7, "black"),                   # its knob
-        box(13.4, 5.4, 7.6, 14.0, 7.8, 8.4, "steel_d"),                   # bipod
-        box(13.4, 4.6, 6.2, 14.0, 5.6, 7.8, "black"),
-        box(13.4, 4.6, 8.2, 14.0, 5.6, 9.8, "black"),
-    ],
-    "shotgun": [
-        box(0.0, 7.4, 6.8, 0.8, 11.2, 9.2, "black", deco="checker"),      # recoil pad
-        box(0.8, 7.6, 6.9, 3.0, 11.0, 9.1, "wood", top="wood_l"),         # butt stock
-        box(1.6, 5.4, 7.0, 4.0, 8.2, 9.0, "wood", top="wood_d"),          # wrist
-        box(1.7, 5.3, 6.95, 3.9, 7.8, 7.1, "wood_d", deco="checker"),     # chequering
-        box(1.7, 5.3, 8.9, 3.9, 7.8, 9.05, "wood_d", deco="checker"),
-        box(3.0, 8.2, 6.8, 6.0, 11.0, 9.2, "steel", top="steel_l"),       # receiver
-        box(3.2, 11.0, 7.5, 5.8, 11.4, 8.5, "steel_l"),                   # its rib
-        box(6.0, 9.0, 7.2, 15.0, 10.6, 8.8, "steel", top="steel_l"),      # barrel
-        box(15.0, 8.9, 7.1, 15.9, 10.7, 8.9, "black"),                    # muzzle
-        box(6.0, 7.4, 7.4, 13.6, 8.7, 8.6, "steel_d"),                    # magazine tube
-        box(7.6, 6.6, 6.85, 11.2, 8.4, 9.15, "wood", top="wood_l"),       # pump
-        box(7.8, 6.5, 6.8, 8.2, 8.5, 9.2, "wood_d"),                      # its grooves
-        box(8.8, 6.5, 6.8, 9.2, 8.5, 9.2, "wood_d"),
-        box(9.8, 6.5, 6.8, 10.2, 8.5, 9.2, "wood_d"),
-        box(10.6, 6.5, 6.8, 11.0, 8.5, 9.2, "wood_d"),
-        box(4.0, 7.2, 7.4, 4.6, 8.4, 8.6, "steel_d"),                     # guard, front
-        box(4.0, 6.5, 7.4, 6.2, 7.3, 8.6, "steel_d"),                     # guard, bottom
-        box(4.7, 7.2, 7.6, 5.4, 8.1, 8.4, "black"),                       # trigger
-        box(4.4, 8.6, 9.2, 5.6, 9.6, 9.4, "black"),                       # ejection port
-        box(4.6, 8.8, 9.4, 5.3, 9.4, 9.6, "brass"),                       # a shell in it
-        box(14.0, 10.6, 7.7, 14.5, 11.3, 8.3, "brass"),                   # bead sight
-    ],
-}
-
-
-def display(tilt=0.0, drop=0.0):
-    """A quarter turn takes the muzzle - which is +x - and points it where the player is looking."""
+    The scale comes from the gun's own length, so a pistol and a rifle both arrive in the hand at a
+    believable size: the drawing decides how long the weapon is, and the transform makes it fit.
+    """
+    held = round(22.0 / length, 3)
     return {
         "thirdperson_righthand": {
-            "rotation": [tilt, -90, 0], "translation": [0, 3.5 - drop, 0], "scale": [0.85, 0.85, 0.85],
+            "rotation": [tilt, -90, 0], "translation": [0, 3.2 - drop, 0],
+            "scale": [held, held, held],
         },
         "thirdperson_lefthand": {
-            "rotation": [tilt, 90, 0], "translation": [0, 3.5 - drop, 0], "scale": [0.85, 0.85, 0.85],
+            "rotation": [tilt, 90, 0], "translation": [0, 3.2 - drop, 0],
+            "scale": [held, held, held],
         },
         "firstperson_righthand": {
-            "rotation": [tilt, -90, 0], "translation": [1.2, 2.6 - drop, 1.2], "scale": [0.9, 0.9, 0.9],
+            "rotation": [tilt, -90, 0], "translation": [1.0, 2.4 - drop, 1.4],
+            "scale": [round(held * 1.08, 3)] * 3,
         },
         "firstperson_lefthand": {
-            "rotation": [tilt, 90, 0], "translation": [1.2, 2.6 - drop, 1.2], "scale": [0.9, 0.9, 0.9],
+            "rotation": [tilt, 90, 0], "translation": [1.0, 2.4 - drop, 1.4],
+            "scale": [round(held * 1.08, 3)] * 3,
         },
-        "gui": {"rotation": [30, 135, 0], "translation": [0, 0, 0], "scale": [0.9, 0.9, 0.9]},
-        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5]},
-        "fixed": {"rotation": [0, 90, 0], "translation": [0, 0, 0], "scale": [1.0, 1.0, 1.0]},
+        "gui": {"rotation": [30, 135, 0], "translation": [0, 0, 0],
+                "scale": [round(14.0 / length, 3)] * 3},
+        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0],
+                   "scale": [round(9.0 / length, 3)] * 3},
+        "fixed": {"rotation": [0, 90, 0], "translation": [0, 0, 0],
+                  "scale": [round(16.0 / length, 3)] * 3},
     }
 
 
 # The reload tips the muzzle down and brings it back. Same boxes, different hand.
-FRAMES = {"": display(), "_r1": display(30, 1.5), "_r2": display(58, 3.0)}
+FRAMES = {"": (0.0, 0.0), "_r1": (30.0, 1.5), "_r2": (58.0, 3.0)}
 
 
-def paint(name, boxes):
+def paint(name, rows):
     """Every box painted into one texture. Falls to a coarser scale rather than overflowing it."""
-    for scale in (5, 4, 3, 2):
+    for scale in (6, 5, 4, 3, 2):
         atlas = Atlas(scale)
         rng = random.Random(name)
         try:
-            elements = [build(part, atlas, rng) for part in boxes]
+            built = elements(rows, atlas, rng)
         except MemoryError:
             continue
-        return atlas.image, elements, scale
+        return atlas.image, built, scale
     raise MemoryError(name + " does not fit its texture")
 
 
+def profile_sheet():
+    """Writes the side views out as a picture, so the silhouettes can be judged before anything else."""
+    cell = 7
+    widest = max(len(rows[0]) for rows in GUNS.values())
+    tall = sum(len(rows) + 2 for rows in GUNS.values())
+    image = Image.new("RGBA", (widest * cell, tall * cell), (26, 28, 34, 255))
+    pixels = image.load()
+    top = 0
+    for name, rows in GUNS.items():
+        for y, row in enumerate(rows):
+            for x, material in enumerate(row):
+                if material == ".":
+                    continue
+                colour = MATERIALS[material][0] + (255,)
+                for dy in range(cell):
+                    for dx in range(cell):
+                        pixels[x * cell + dx, (top + y) * cell + dy] = colour
+        top += len(rows) + 2
+    path = os.path.join(HERE, "gun_profiles.png")
+    image.save(path)
+    print("wrote", path)
+
+
 def main():
+    if "--profile" in sys.argv:
+        profile_sheet()
+        return
+
     for folder in (ITEMS, MODELS, TEXTURES):
         os.makedirs(folder, exist_ok=True)
 
-    for name, boxes in GUNS.items():
-        image, elements, scale = paint(name, boxes)
+    for name, rows in GUNS.items():
+        image, built, scale = paint(name, rows)
         image.save(os.path.join(TEXTURES, "gun_" + name + ".png"))
-        for suffix, block in FRAMES.items():
+        length = len(rows[0])
+        for suffix, (tilt, drop) in FRAMES.items():
             model = {
                 "textures": {"t": "asuracraft:item/gun_" + name,
                              "particle": "asuracraft:item/gun_" + name},
-                "elements": elements,
-                "display": block,
+                "elements": built,
+                "display": display(length, tilt, drop),
                 "gui_light": "front",
             }
             with io.open(os.path.join(MODELS, name + suffix + ".json"), "w",
@@ -376,8 +547,8 @@ def main():
             with io.open(os.path.join(ITEMS, name + suffix + ".json"), "w",
                          encoding="utf-8") as out:
                 json.dump(definition, out, ensure_ascii=False, indent=1)
-        print("  %-8s %2d boxes, %d faces painted at %dpx per unit"
-              % (name, len(boxes), len(boxes) * 6, scale))
+        print("  %-8s %2d x %2d drawing -> %3d boxes, %dpx per unit"
+              % (name, length, len(rows), len(built), scale))
 
     print("guns   ", len(GUNS), "models x", len(FRAMES), "frames")
 
