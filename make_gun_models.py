@@ -857,7 +857,11 @@ def display(length, height, blocks, tilt=0.0, drop=0.0):
 
 # The reload tips the muzzle down and brings it back. Same boxes, different hand - which is why the
 # three frames are parents of one shape file rather than three copies of several hundred elements.
-FRAMES = {"": (0.0, 0.0), "_r1": (30.0, 1.5), "_r2": (58.0, 3.0)}
+# The reload poses. Thirty degrees was not a pose, it was a gun held slightly wrong: at the size a
+# weapon is drawn in the hand, a dip has to be nearly a right angle before anybody reads it as one.
+# The second frame drops the muzzle past vertical and pulls the whole gun down and back, which is what
+# somebody actually does with a rifle while their other hand is finding a magazine.
+FRAMES = {"": (0.0, 0.0), "_r1": (52.0, 2.6), "_r2": (88.0, 5.0)}
 
 
 def profile_sheet():
