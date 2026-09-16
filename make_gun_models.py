@@ -71,16 +71,22 @@ MATERIALS = {
     "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
-    "W1": ((238, 236, 230), "flat",    2.30, "round"),  # gauze, rolled
-    "W2": ((206, 204, 196), "flat",    2.34, "round"),  # the seam between wraps
-    "B1": ((202, 205, 212), "brushed", 0.55, "rect"),   # blister foil
-    "B2": ((230, 198, 72),  "flat",    1.15, "round"),  # a pill under it
-    "C1": ((86, 182, 96),   "flat",    2.36, "round"),  # the green wrapper
-    "C2": ((86, 152, 214),  "flat",    2.36, "round"),  # the blue wrapper
-    "C3": ((202, 66, 58),   "flat",    2.36, "round"),  # the red wrapper
+    "W1": ((238, 236, 230), "flat",    1.70, "soft"),   # gauze, rolled
+    "W2": ((186, 183, 174), "flat",    1.38, "soft"),   # the groove between one wrap and the next
+    "W3": ((244, 242, 237), "flat",    0.42, "soft"),   # the loose end, one thickness of gauze
+    "B1": ((206, 209, 216), "brushed", 0.40, "rect"),   # blister foil, genuinely thin
+    "B3": ((150, 154, 162), "flat",    0.42, "rect"),   # the perforation down the middle
+    "B2": ((232, 202, 78),  "flat",    0.95, "round"),  # a pill under the foil
+    "C1": ((86, 182, 96),   "flat",    1.80, "soft"),   # the green edge
+    "C2": ((86, 152, 214),  "flat",    1.80, "soft"),   # the blue edge
+    "C3": ((202, 66, 58),   "flat",    1.80, "soft"),   # the red edge
     "K1": ((198, 54, 48),   "flat",    2.95, "soft"),   # medical red, standing proud
     "K2": ((234, 234, 230), "flat",    2.60, "soft"),   # case shell
     "K3": ((104, 108, 118), "brushed", 1.30, "soft"),   # handle, seam and catches
+    "K4": ((88, 102, 66),   "checker", 2.35, "soft"),   # olive webbing - the field pouch
+    "K5": ((238, 240, 236), "flat",    2.55, "soft"),   # a white cross sewn onto it
+    "K6": ((166, 170, 178), "brushed", 2.50, "rect"),   # a zip
+    "K7": ((214, 216, 222), "brushed", 1.45, "soft"),   # chrome latch
     "P1": ((224, 188, 62),  "brushed", 1.90, "round"),  # pill bottle
     "P2": ((240, 240, 236), "brushed", 2.00, "round"),  # its cap
     "Y1": ((222, 230, 238), "glass",   1.40, "round"),  # syringe barrel
@@ -306,72 +312,107 @@ def held(name, length, height, blocks, build):
 
 
 def roll(band):
-    """A rolled bandage lying on its side.
+    """A rolled bandage, seen the way the icon for one always is: end on, with the spiral showing.
 
-    The first version drew a circle, which with a round cross-section came out as a ball with a ribbon
-    round it - the thing a bandage looks least like. A roll seen from the side is a rectangle with its
-    ends taken off; only the cross-section is a circle, and that is the extruder's job, not the
-    drawing's.
+    Two goes at this. A roll drawn from the side is a white cylinder and reads as a tin; the spiral -
+    which is the one thing that says "this is cloth wound round and round" - is on the end, and the end
+    is the face nobody was looking at. So the roll is turned to face the viewer, the wraps are drawn as
+    concentric rings, and the tier colour goes round the outside edge rather than in a band across the
+    middle, where it was covering most of the thing it was supposed to be labelling.
     """
     def build(g):
-        g.rrect("W1", 0.4, 2.2, 11.2, 9.4, 1.7)
-        g.stripe("W2", 1.4, 2.4, 10.4, 9.2, 2.0, 0.3)      # where each wrap overlaps the last
-        g.recolour(band, 4.2, 2.0, 7.8, 9.6)               # the paper wrapper round the middle
-        g.rrect("W1", 9.8, 4.6, 13.2, 6.2, 0.5)            # the loose end, hanging off
+        g.ellipse("W1", 6.2, 6.2, 5.4, 5.4)
+        g.ring(band, 6.2, 6.2, 5.4, 5.4, 0.85)              # the tier colour, round the rim
+        g.ring("W2", 6.2, 6.2, 4.15, 4.15, 0.48)            # the wraps, sunk in so they catch shadow
+        g.ring("W2", 6.2, 6.2, 2.95, 2.95, 0.46)
+        g.ring("W2", 6.2, 6.2, 1.85, 1.85, 0.44)
+        g.ellipse("W2", 6.2, 6.2, 0.8, 0.8)                 # the hole down the middle
+        # The end pulled loose: out of the side of the roll and hanging, a single thickness of gauze.
+        g.rect("W3", 10.2, 5.9, 13.9, 6.65)
+        g.rect("W3", 13.15, 2.2, 13.9, 6.4)
+        g.rect("W3", 12.5, 1.5, 14.1, 2.5)
     return build
 
 
 def blister(g):
-    """Painkillers as a blister pack.
+    """Painkillers: a foil card with two rows of pills pressed into it.
 
-    A bottle drawn as a cylinder came out as a stack of rings, and even drawn well a bottle is a shape
-    the eye has to work at. A foil card with a row of pills pressed into it is unmistakable at any size,
-    which for an item seen for a fifth of a second in a hotbar is the only thing that matters.
+    Thin is the whole of it. A blister pack is a card you could slip into a wallet with small domes on
+    one side; the first attempt made the domes nearly as deep as the card was wide, which turned it
+    into a brick with yellow lumps. The card is now four tenths of a unit each side of centre - a
+    twentieth of a block - and the pills stand less than a unit proud of it.
     """
-    g.rrect("B1", 0.5, 1.0, 13.5, 7.0, 0.9)
+    g.rrect("B1", 0.4, 0.8, 15.6, 8.2, 0.9)
+    g.rect("B3", 0.4, 4.3, 15.6, 4.7)                        # the perforation between the rows
     for index in range(5):
-        g.ellipse("B2", 2.1 + index * 2.45, 4.0, 0.95, 1.7)
+        g.ellipse("B2", 2.2 + index * 2.8, 2.6, 0.85, 1.0)
+        g.ellipse("B2", 2.2 + index * 2.8, 6.4, 0.85, 1.0)
+
+
+def pouch(g):
+    """The first aid kit: a soft olive pouch with a zip and a white cross.
+
+    Deliberately nothing like the medkit. The two were the same white box with the same red cross at
+    two sizes, which told the player nothing at a glance - and a glance is all either of them gets.
+    One is now cloth, olive, soft-cornered, zipped, with a strap; the other is a hard white case with
+    chrome latches and a carrying handle. Different material, different colour, different silhouette.
+    """
+    g.rrect("K4", 0.6, 0.4, 11.4, 9.4, 2.0)
+    g.rect("K6", 0.9, 6.6, 11.1, 7.2)                  # the zip across the top
+    g.rect("K4", 4.6, 9.2, 7.4, 10.8)                  # a strap loop
+    g.erase(5.3, 9.6, 6.7, 10.4)
+    g.rect("K5", 4.9, 1.8, 7.1, 6.0)                   # the cross
+    g.rect("K5", 3.2, 3.2, 8.8, 4.6)
 
 
 def case(shell, wide, tall, latch):
-    """A hard case: a handle you can see through, a seam round the lid, and a cross standing proud."""
+    """The medkit: a hard case, chrome latches, a handle with a hole through it."""
     def build(g):
-        g.rrect("K3", wide / 2 - 2.0, tall - 0.4, wide / 2 + 2.0, tall + 2.6, 0.7)
-        g.erase(wide / 2 - 1.2, tall + 0.4, wide / 2 + 1.2, tall + 1.9)
+        g.rrect("K3", wide / 2 - 2.2, tall - 0.4, wide / 2 + 2.2, tall + 2.8, 0.7)
+        g.erase(wide / 2 - 1.4, tall + 0.5, wide / 2 + 1.4, tall + 2.1)
         g.rrect(shell, 0, 0, wide, tall, 1.2)
-        g.rect("K3", 0, tall * 0.58, wide, tall * 0.58 + 0.6)
-        g.rect("K1", wide / 2 - 1.2, tall * 0.16, wide / 2 + 1.2, tall * 0.84)
-        g.rect("K1", wide / 2 - 3.4, tall * 0.40, wide / 2 + 3.4, tall * 0.60)
+        g.rect("K3", 0, tall * 0.60, wide, tall * 0.60 + 0.5)
+        g.rect("K1", wide / 2 - 1.3, tall * 0.14, wide / 2 + 1.3, tall * 0.86)
+        g.rect("K1", wide / 2 - 3.6, tall * 0.38, wide / 2 + 3.6, tall * 0.62)
         if latch:
-            g.rect("K3", wide * 0.14, tall * 0.50, wide * 0.28, tall * 0.68)
-            g.rect("K3", wide * 0.72, tall * 0.50, wide * 0.86, tall * 0.68)
+            g.rrect("K7", wide * 0.10, tall * 0.50, wide * 0.24, tall * 0.72, 0.3)
+            g.rrect("K7", wide * 0.76, tall * 0.50, wide * 0.90, tall * 0.72, 0.3)
     return build
 
 
 def injector(fluid, collar):
-    """A syringe, lying along the barrel so it points where the hand points."""
+    """A syringe: thumb rest, plunger, barrel, hub, and a needle that comes to a point.
+
+    The needle was a bar of even thickness, which is a nail. It steps down twice and ends on a single
+    cell, so it reads as sharp; and there is now a disc on the back of the plunger to push, which is
+    the part of a syringe everybody's eye looks for first.
+    """
     def build(g):
-        g.rect("Y4", 0.0, 2.2, 3.4, 3.8)
-        g.rrect("Y4", 2.8, 0.4, 4.4, 5.6, 0.5)          # thumb flange
-        g.rrect("Y1", 4.4, 0.9, 14.2, 5.1, 0.9)         # barrel
-        g.recolour(fluid, 5.4, 0.9, 12.8, 5.1)
-        g.stripe("Y4", 6.0, 4.2, 12.0, 4.6, 1.6, 0.3)   # graduations
+        g.rrect("Y4", 0.0, 1.5, 1.7, 6.5, 0.6)          # thumb rest, the disc you press
+        g.rect("Y4", 1.7, 3.4, 5.2, 4.6)                # plunger rod
+        g.rrect("Y4", 4.8, 0.5, 6.2, 7.5, 0.5)          # finger flange
+        g.rrect("Y1", 6.2, 1.7, 15.4, 6.3, 0.9)         # barrel
+        g.recolour(fluid, 7.4, 1.7, 14.2, 6.3)
+        g.recolour("Y4", 6.4, 1.7, 7.4, 6.3)            # the plunger head inside it
+        g.stripe("Y4", 8.4, 5.4, 13.8, 5.7, 1.5, 0.28)  # graduations
         if collar:
-            g.rect(collar, 12.8, 0.9, 14.0, 5.1)
-        g.rrect("Y4", 14.2, 2.0, 15.8, 4.0, 0.4)
-        g.rect("Y4", 15.8, 2.7, 18.0, 3.3)
+            g.rect(collar, 14.2, 1.7, 15.2, 6.3)
+        g.rrect("Y4", 15.4, 2.9, 16.8, 5.1, 0.4)        # hub
+        g.rect("Y4", 16.8, 3.5, 18.4, 4.5)              # needle, stepping down to a point
+        g.rect("Y4", 18.4, 3.7, 19.3, 4.3)
+        g.rect("Y4", 19.3, 3.85, 20.0, 4.15)
     return build
 
 
-held("bandage_green", 14, 12, 0.32, roll("C1"))
-held("bandage_blue", 14, 12, 0.32, roll("C2"))
-held("bandage_red", 14, 12, 0.32, roll("C3"))
-held("firstaid", 12, 12, 0.40, case("K2", 12, 9, False))
-held("medkit", 15, 14, 0.48, case("K2", 15, 11, True))
-held("painkillers", 14, 8, 0.30, blister)
-held("epinephrine", 18, 6, 0.36, injector("Y3", "Y5"))
-held("antidote", 18, 6, 0.34, injector("Y2", None))
-held("antidote_full", 18, 6, 0.36, injector("Y2", "Y5"))
+held("bandage_green", 15, 13, 0.34, roll("C1"))
+held("bandage_blue", 15, 13, 0.34, roll("C2"))
+held("bandage_red", 15, 13, 0.34, roll("C3"))
+held("firstaid", 12, 11, 0.38, pouch)
+held("medkit", 16, 15, 0.50, case("K2", 16, 11, True))
+held("painkillers", 16, 9, 0.34, blister)
+held("epinephrine", 20, 8, 0.40, injector("Y3", "Y5"))
+held("antidote", 20, 8, 0.38, injector("Y2", None))
+held("antidote_full", 20, 8, 0.40, injector("Y2", "Y5"))
 
 
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
