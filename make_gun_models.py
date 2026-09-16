@@ -83,6 +83,18 @@ MATERIALS = {
     "F6": ((156, 84, 40),  "flat",    3.02, "round"),  # its paint band
     "F7": ((44, 46, 52),   "grit",    3.00, "round"),  # stun grenade body
     "F8": ((206, 186, 84), "flat",    3.02, "round"),  # its warning band
+    "H1": ((88, 96, 70),   "grit",    3.40, "round"),  # helmet shell, olive
+    "H2": ((62, 68, 50),   "grit",    3.40, "round"),  # its shaded half
+    "H3": ((196, 200, 206), "brushed", 3.30, "round"), # riot helmet, white
+    "H4": ((44, 48, 56),   "glass",   3.10, "soft"),   # visor
+    "H5": ((66, 70, 62),   "flat",    2.40, "rect"),   # chin strap
+    "H6": ((46, 58, 44),   "brushed", 2.60, "soft"),   # night vision housing
+    "H7": ((120, 186, 116), "flat",   2.40, "round"),  # its lenses
+    "V1": ((86, 96, 66),   "grit",    3.20, "dee"),    # vest body, olive
+    "V2": ((62, 70, 48),   "grit",    3.20, "dee"),    # its pouches
+    "V3": ((96, 100, 108), "grit",    3.20, "dee"),    # police vest, grey
+    "V4": ((52, 54, 60),   "brushed", 3.20, "dee"),    # heavy plate
+    "V5": ((172, 156, 96), "flat",    2.30, "rect"),   # webbing and buckles
     "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
     # All six are exactly the same thickness, and that is the point. A cross a tenth of a unit proud of
     # its band has a sliver of side face all the way round it, and that sliver is drawn - which is the
@@ -625,6 +637,49 @@ def stun(g):
     g.ring("F4", 6.2, 18.2, 1.8, 1.4, 0.6)
 
 
+def helmet(shell, shade, visor=None, goggles=False, strap=True):
+    """A helmet seen from the side: a dome, a brim, and whatever is strapped to it.
+
+    Drawn in profile rather than face on, because that is the one angle at which a helmet is instantly
+    a helmet - face on it is a circle, and a circle at sixteen pixels is a ball.
+    """
+    def build(g):
+        g.ellipse(shell, 8.0, 7.0, 7.4, 6.0)          # the dome
+        g.erase(0.0, 0.0, 16.0, 7.0)                  # cut off below the brim
+        g.rect(shell, 0.8, 5.0, 15.2, 7.4)            # the brim itself
+        g.recolour(shade, 0.8, 5.0, 8.0, 9.0)         # the half in shadow
+        if strap:
+            g.rect("H5", 3.0, 3.6, 4.4, 5.6)
+            g.rect("H5", 11.6, 3.6, 13.0, 5.6)
+        if visor is not None:
+            g.rect(visor, 9.4, 2.6, 15.4, 6.2)
+            g.chamfer(9.4, 2.6, 15.4, 6.2, 0.6)
+        if goggles:
+            g.rect("H6", 12.0, 7.6, 15.0, 11.0)       # the mount over the brow
+            g.rect("H6", 14.0, 8.2, 17.4, 10.4)
+            g.ellipse("H7", 17.0, 9.3, 1.1, 1.1)
+    return build
+
+
+def vest(body, pouch, plate=None):
+    """A plate carrier laid flat: shoulders, a front panel, three pouches and a buckle."""
+    def build(g):
+        g.rrect(body, 2.0, 0.0, 14.0, 15.0, 1.6)      # the torso panel
+        g.rect(body, 0.0, 10.0, 4.0, 15.0)            # shoulders
+        g.rect(body, 12.0, 10.0, 16.0, 15.0)
+        g.erase(0.0, 13.6, 16.0, 15.0)
+        g.rect(body, 1.0, 13.0, 5.0, 16.0)
+        g.rect(body, 11.0, 13.0, 15.0, 16.0)
+        if plate is not None:
+            g.recolour(plate, 4.0, 5.0, 12.0, 12.0)
+        for y in (1.4, 4.2):
+            g.rect(pouch, 3.2, y, 6.6, y + 2.4)
+            g.rect(pouch, 9.4, y, 12.8, y + 2.4)
+        g.rect("V5", 6.8, 1.0, 9.2, 8.0)              # the webbing down the middle
+        g.rect("V5", 3.0, 8.6, 13.0, 9.6)
+    return build
+
+
 def blister(g, phase=0.0):
     """Painkillers: a card and ten pills. No perforation, no print, no lines.
 
@@ -728,6 +783,13 @@ held("painkillers", 12, 16, 0.19, bottle, 4, [(12, 0.02), (22, 0.04), (12, 0.02)
 held("epinephrine", 22, 7, 0.34, booster, 5)
 held("antidote", 24, 9, 0.38, antiviral("G3"), 5)
 held("antidote_full", 24, 9, 0.38, antiviral("G4"), 5)
+held("gear_cap", 18, 12, 0.30, helmet("H1", "H2", strap=False))
+held("gear_riot_helmet", 18, 12, 0.32, helmet("H3", "H2", visor="H4"))
+held("gear_military_helmet", 18, 12, 0.32, helmet("H1", "H2"))
+held("gear_nvg_helmet", 19, 12, 0.34, helmet("H1", "H2", goggles=True))
+held("gear_light_vest", 16, 16, 0.36, vest("V3", "V2"))
+held("gear_military_vest", 16, 16, 0.38, vest("V1", "V2", plate="V2"))
+held("gear_heavy_vest", 16, 16, 0.40, vest("V4", "V2", plate="V3"))
 held("grenade_frag", 14, 21, 0.30, frag)
 held("grenade_smoke", 14, 21, 0.30, smoke)
 held("grenade_stun", 14, 20, 0.29, stun)

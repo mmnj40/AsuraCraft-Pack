@@ -1,0 +1,632 @@
+{
+ "full": 6000,
+ "open": 6000,
+ "places": [
+  {
+   "name": "ท่าเรือประมง",
+   "kind": "safe",
+   "x": 120,
+   "z": 2600,
+   "radius": 110,
+   "loot": 0,
+   "zombies": 0,
+   "open": true
+  },
+  {
+   "name": "หมู่บ้านชายหาด",
+   "kind": "village",
+   "x": -620,
+   "z": 2500,
+   "radius": 130,
+   "loot": 1,
+   "zombies": 1,
+   "open": true
+  },
+  {
+   "name": "โมเต็ลริมทาง",
+   "kind": "motel",
+   "x": 700,
+   "z": 2380,
+   "radius": 110,
+   "loot": 1,
+   "zombies": 1,
+   "open": true
+  },
+  {
+   "name": "ท่าจอดเรือ",
+   "kind": "marina",
+   "x": 1420,
+   "z": 2560,
+   "radius": 120,
+   "loot": 1,
+   "zombies": 1,
+   "open": true
+  },
+  {
+   "name": "บ้านประมงเก่า",
+   "kind": "village",
+   "x": -1500,
+   "z": 2620,
+   "radius": 110,
+   "loot": 1,
+   "zombies": 1,
+   "open": true
+  },
+  {
+   "name": "ปั๊มชายฝั่ง",
+   "kind": "petrol",
+   "x": -120,
+   "z": 2180,
+   "radius": 80,
+   "loot": 1,
+   "zombies": 1,
+   "open": true
+  },
+  {
+   "name": "ถนนเลียบหาด",
+   "kind": "village",
+   "x": 2000,
+   "z": 2400,
+   "radius": 120,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "หมู่บ้านสวนยาง",
+   "kind": "village",
+   "x": -1900,
+   "z": 1700,
+   "radius": 130,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "ฟาร์มโคนม",
+   "kind": "farm",
+   "x": -900,
+   "z": 1500,
+   "radius": 150,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "ไร่ข้าวโพด",
+   "kind": "farm",
+   "x": 600,
+   "z": 1560,
+   "radius": 160,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "โรงสีข้าว",
+   "kind": "industry",
+   "x": 1500,
+   "z": 1500,
+   "radius": 120,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "โรงเรียนบ้านหนองแค",
+   "kind": "school",
+   "x": -200,
+   "z": 1240,
+   "radius": 120,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "สถานีรถไฟใต้",
+   "kind": "station",
+   "x": 1100,
+   "z": 1080,
+   "radius": 130,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "ปั๊มสี่แยก",
+   "kind": "petrol",
+   "x": -1250,
+   "z": 1120,
+   "radius": 80,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "หมู่บ้านจัดสรร",
+   "kind": "suburb",
+   "x": 1900,
+   "z": 1150,
+   "radius": 150,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "วัดร้าง",
+   "kind": "church",
+   "x": -2350,
+   "z": 1250,
+   "radius": 100,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "จุดพักรถ",
+   "kind": "safe",
+   "x": -1800,
+   "z": 400,
+   "radius": 100,
+   "loot": 0,
+   "zombies": 0,
+   "open": true
+  },
+  {
+   "name": "ดาวน์ทาวน์",
+   "kind": "downtown",
+   "x": 0,
+   "z": 0,
+   "radius": 260,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "ห้างสรรพสินค้า",
+   "kind": "mall",
+   "x": 520,
+   "z": 330,
+   "radius": 180,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "โรงพยาบาลกลาง",
+   "kind": "hospital",
+   "x": -480,
+   "z": 260,
+   "radius": 170,
+   "loot": 3,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "กองบัญชาการตำรวจ",
+   "kind": "police",
+   "x": 340,
+   "z": -320,
+   "radius": 150,
+   "loot": 3,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "อาคารจอดรถ",
+   "kind": "garage",
+   "x": -260,
+   "z": -300,
+   "radius": 130,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "สถานีดับเพลิง",
+   "kind": "fire",
+   "x": 780,
+   "z": -120,
+   "radius": 110,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "ธนาคารกลาง",
+   "kind": "bank",
+   "x": -760,
+   "z": -140,
+   "radius": 120,
+   "loot": 3,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "อพาร์ตเมนต์เหนือ",
+   "kind": "apartments",
+   "x": -140,
+   "z": -700,
+   "radius": 160,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "อพาร์ตเมนต์ใต้",
+   "kind": "apartments",
+   "x": 260,
+   "z": 760,
+   "radius": 160,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "สนามกีฬา",
+   "kind": "stadium",
+   "x": 1150,
+   "z": -520,
+   "radius": 180,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "ตลาดสด",
+   "kind": "market",
+   "x": -1050,
+   "z": 620,
+   "radius": 130,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "โรงแรมเมือง",
+   "kind": "motel",
+   "x": 900,
+   "z": 620,
+   "radius": 120,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "ท่าเรือสินค้า",
+   "kind": "port",
+   "x": 2300,
+   "z": 300,
+   "radius": 220,
+   "loot": 3,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "โรงงานเหล็ก",
+   "kind": "industry",
+   "x": 1750,
+   "z": -180,
+   "radius": 180,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "คลังสินค้าตะวันออก",
+   "kind": "warehouse",
+   "x": 2450,
+   "z": 900,
+   "radius": 150,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "โรงไฟฟ้า",
+   "kind": "power",
+   "x": 2600,
+   "z": -600,
+   "radius": 170,
+   "loot": 3,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "ลานรถไฟ",
+   "kind": "station",
+   "x": 1600,
+   "z": 760,
+   "radius": 150,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "คลังน้ำมัน",
+   "kind": "warehouse",
+   "x": 2750,
+   "z": 1500,
+   "radius": 140,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "เรือนจำกลาง",
+   "kind": "prison",
+   "x": -2400,
+   "z": -300,
+   "radius": 200,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "เหมืองหิน",
+   "kind": "quarry",
+   "x": -1750,
+   "z": -900,
+   "radius": 180,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "เขื่อน",
+   "kind": "dam",
+   "x": -2700,
+   "z": 500,
+   "radius": 170,
+   "loot": 2,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "แคมป์ตัดไม้",
+   "kind": "logging",
+   "x": -1500,
+   "z": -1600,
+   "radius": 130,
+   "loot": 1,
+   "zombies": 2,
+   "open": true
+  },
+  {
+   "name": "สถานีวิจัย",
+   "kind": "lab",
+   "x": -2600,
+   "z": -1500,
+   "radius": 160,
+   "loot": 3,
+   "zombies": 5,
+   "open": true
+  },
+  {
+   "name": "ด่านตะวันตก",
+   "kind": "checkpoint",
+   "x": -1200,
+   "z": -600,
+   "radius": 90,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "ด่านเหนือ",
+   "kind": "checkpoint",
+   "x": 200,
+   "z": -1400,
+   "radius": 90,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "ค่ายทหาร",
+   "kind": "barracks",
+   "x": -500,
+   "z": -1900,
+   "radius": 190,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "สนามบินทหาร",
+   "kind": "airfield",
+   "x": 800,
+   "z": -2200,
+   "radius": 260,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "คลังอาวุธ",
+   "kind": "armoury",
+   "x": -1400,
+   "z": -2400,
+   "radius": 150,
+   "loot": 3,
+   "zombies": 5,
+   "open": true
+  },
+  {
+   "name": "สถานีเรดาร์",
+   "kind": "radar",
+   "x": 1700,
+   "z": -2600,
+   "radius": 130,
+   "loot": 3,
+   "zombies": 4,
+   "open": true
+  },
+  {
+   "name": "ฐานบัญชาการเหนือ",
+   "kind": "barracks",
+   "x": -200,
+   "z": -2700,
+   "radius": 170,
+   "loot": 3,
+   "zombies": 5,
+   "open": true
+  },
+  {
+   "name": "จุดส่งกำลังบำรุง",
+   "kind": "warehouse",
+   "x": 1300,
+   "z": -1700,
+   "radius": 130,
+   "loot": 2,
+   "zombies": 3,
+   "open": true
+  },
+  {
+   "name": "แคมป์ผู้รอดชีวิต",
+   "kind": "safe",
+   "x": 2300,
+   "z": -1200,
+   "radius": 100,
+   "loot": 0,
+   "zombies": 0,
+   "open": true
+  }
+ ],
+ "roads": [
+  [
+   {
+    "x": -2000,
+    "z": 2600
+   },
+   {
+    "x": 0,
+    "z": 2450
+   },
+   {
+    "x": 2100,
+    "z": 2450
+   }
+  ],
+  [
+   {
+    "x": 120,
+    "z": 2600
+   },
+   {
+    "x": 0,
+    "z": 1800
+   },
+   {
+    "x": 0,
+    "z": 700
+   },
+   {
+    "x": 0,
+    "z": 0
+   }
+  ],
+  [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": -1400
+   },
+   {
+    "x": -500,
+    "z": -1900
+   },
+   {
+    "x": -200,
+    "z": -2700
+   }
+  ],
+  [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 1600,
+    "z": 100
+   },
+   {
+    "x": 2300,
+    "z": 300
+   }
+  ],
+  [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": -1200,
+    "z": -600
+   },
+   {
+    "x": -2400,
+    "z": -300
+   }
+  ],
+  [
+   {
+    "x": -900,
+    "z": 1500
+   },
+   {
+    "x": -200,
+    "z": 1240
+   },
+   {
+    "x": 600,
+    "z": 1560
+   },
+   {
+    "x": 1500,
+    "z": 1500
+   }
+  ],
+  [
+   {
+    "x": 800,
+    "z": -2200
+   },
+   {
+    "x": 200,
+    "z": -1400
+   }
+  ],
+  [
+   {
+    "x": 1150,
+    "z": -520
+   },
+   {
+    "x": 1750,
+    "z": -180
+   },
+   {
+    "x": 2600,
+    "z": -600
+   }
+  ],
+  [
+   {
+    "x": -1800,
+    "z": 400
+   },
+   {
+    "x": -1050,
+    "z": 620
+   },
+   {
+    "x": 0,
+    "z": 700
+   }
+  ]
+ ]
+}
