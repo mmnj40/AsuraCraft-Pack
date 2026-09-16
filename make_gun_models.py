@@ -71,15 +71,15 @@ MATERIALS = {
     "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
-    "W1": ((238, 236, 230), "flat",    1.70, "soft"),   # gauze, rolled
-    "W2": ((186, 183, 174), "flat",    1.38, "soft"),   # the groove between one wrap and the next
-    "W3": ((244, 242, 237), "flat",    0.42, "soft"),   # the loose end, one thickness of gauze
-    "B1": ((206, 209, 216), "brushed", 0.40, "rect"),   # blister foil, genuinely thin
-    "B3": ((150, 154, 162), "flat",    0.42, "rect"),   # the perforation down the middle
-    "B2": ((232, 202, 78),  "flat",    0.95, "round"),  # a pill under the foil
-    "C1": ((86, 182, 96),   "flat",    1.80, "soft"),   # the green edge
-    "C2": ((86, 152, 214),  "flat",    1.80, "soft"),   # the blue edge
-    "C3": ((202, 66, 58),   "flat",    1.80, "soft"),   # the red edge
+    "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
+    "W2": ((214, 211, 203), "flat",    1.85, "rect"),   # the line between wraps, printed not cut
+    "W3": ((246, 244, 239), "flat",    0.55, "rect"),   # the loose end, one thickness of gauze
+    "B1": ((210, 213, 220), "flat",    0.45, "rect"),   # blister foil, genuinely thin
+    "B3": ((162, 166, 174), "flat",    0.45, "rect"),   # the perforation down the middle
+    "B2": ((236, 208, 86),  "flat",    0.95, "rect"),   # a pill under the foil
+    "C1": ((86, 182, 96),   "flat",    1.85, "rect"),   # the green edge
+    "C2": ((86, 152, 214),  "flat",    1.85, "rect"),   # the blue edge
+    "C3": ((202, 66, 58),   "flat",    1.85, "rect"),   # the red edge
     "K1": ((198, 54, 48),   "flat",    2.95, "soft"),   # medical red, standing proud
     "K2": ((234, 234, 230), "flat",    2.60, "soft"),   # case shell
     "K3": ((104, 108, 118), "brushed", 1.30, "soft"),   # handle, seam and catches
@@ -94,6 +94,10 @@ MATERIALS = {
     "Y3": ((240, 242, 246), "flat",    1.15, "round"),
     "Y4": ((186, 190, 198), "brushed", 0.70, "round"),  # steel
     "Y5": ((216, 196, 96),  "brushed", 1.50, "round"),  # a gold collar on the good one
+    "A1": ((206, 208, 212), "flat",    1.95, "round"),  # the body of an auto-injector
+    "A2": ((58, 148, 78),   "flat",    2.05, "round"),  # its cap
+    "A3": ((44, 46, 52),    "flat",    2.00, "rect"),   # the grip band round it
+    "A4": ((222, 60, 52),   "flat",    2.02, "rect"),   # a red stripe, so it is not the green one
     "o": ((96, 102, 114), "brushed", 3.00, "round"),  # revolver cylinder, proud of the frame
     "j": ((72, 78, 90),    "brushed", 1.95, "round"),  # revolver barrel, same steel as the frame
 }
@@ -312,41 +316,47 @@ def held(name, length, height, blocks, build):
 
 
 def roll(band):
-    """A rolled bandage, seen the way the icon for one always is: end on, with the spiral showing.
+    """A rolled bandage, end on, drawn as simply as it can be drawn.
 
-    Two goes at this. A roll drawn from the side is a white cylinder and reads as a tin; the spiral -
-    which is the one thing that says "this is cloth wound round and round" - is on the end, and the end
-    is the face nobody was looking at. So the roll is turned to face the viewer, the wraps are drawn as
-    concentric rings, and the tier colour goes round the outside edge rather than in a band across the
-    middle, where it was covering most of the thing it was supposed to be labelling.
+    This is not a rifle and should not be built like one. The wraps were grooves cut into the roll and
+    the roll had a curved cross-section, so it stepped in two directions at once and came out looking
+    chewed. Everything here is now one flat slab: the wraps are printed lines of the same thickness as
+    the gauze, the rim colour is printed too, and the only real depth in the object is the tail.
     """
     def build(g):
         g.ellipse("W1", 6.2, 6.2, 5.4, 5.4)
-        g.ring(band, 6.2, 6.2, 5.4, 5.4, 0.85)              # the tier colour, round the rim
-        g.ring("W2", 6.2, 6.2, 4.15, 4.15, 0.48)            # the wraps, sunk in so they catch shadow
-        g.ring("W2", 6.2, 6.2, 2.95, 2.95, 0.46)
-        g.ring("W2", 6.2, 6.2, 1.85, 1.85, 0.44)
-        g.ellipse("W2", 6.2, 6.2, 0.8, 0.8)                 # the hole down the middle
-        # The end pulled loose: out of the side of the roll and hanging, a single thickness of gauze.
-        g.rect("W3", 10.2, 5.9, 13.9, 6.65)
-        g.rect("W3", 13.15, 2.2, 13.9, 6.4)
-        g.rect("W3", 12.5, 1.5, 14.1, 2.5)
+        g.ring(band, 6.2, 6.2, 5.4, 5.4, 1.0)               # the tier colour, round the rim
+        g.ring("W2", 6.2, 6.2, 4.0, 4.0, 0.36)              # two printed wraps, and no more
+        g.ring("W2", 6.2, 6.2, 2.4, 2.4, 0.36)
+        g.ellipse("W2", 6.2, 6.2, 1.0, 1.0)                 # the hole down the middle
+        g.rect("W3", 10.6, 5.8, 14.0, 6.8)                  # the end, pulled loose
+        g.rect("W3", 13.0, 2.4, 14.0, 6.6)
     return build
 
 
 def blister(g):
-    """Painkillers: a foil card with two rows of pills pressed into it.
-
-    Thin is the whole of it. A blister pack is a card you could slip into a wallet with small domes on
-    one side; the first attempt made the domes nearly as deep as the card was wide, which turned it
-    into a brick with yellow lumps. The card is now four tenths of a unit each side of centre - a
-    twentieth of a block - and the pills stand less than a unit proud of it.
-    """
-    g.rrect("B1", 0.4, 0.8, 15.6, 8.2, 0.9)
-    g.rect("B3", 0.4, 4.3, 15.6, 4.7)                        # the perforation between the rows
+    """Painkillers: a foil card with two rows of pills. One step of depth and nothing else."""
+    g.rrect("B1", 0.4, 0.8, 15.6, 8.2, 1.1)
+    g.rect("B3", 0.4, 4.35, 15.6, 4.65)
     for index in range(5):
-        g.ellipse("B2", 2.2 + index * 2.8, 2.6, 0.85, 1.0)
-        g.ellipse("B2", 2.2 + index * 2.8, 6.4, 0.85, 1.0)
+        g.ellipse("B2", 2.2 + index * 2.8, 2.55, 0.9, 1.05)
+        g.ellipse("B2", 2.2 + index * 2.8, 6.45, 0.9, 1.05)
+
+
+def autopen(g):
+    """The full cure: an auto-injector, not a syringe.
+
+    Twenty per cent and a hundred per cent were the same syringe with a different coloured ring, which
+    at the size these are seen is no difference at all. The one you buy is a sealed pen - a fat tube
+    with a screw cap and a grip band, no plunger and no visible needle - so the two do not share a
+    silhouette, let alone a paint job.
+    """
+    g.rrect("A1", 2.6, 1.2, 15.0, 6.8, 1.4)
+    g.rrect("A2", 14.4, 0.8, 18.4, 7.2, 1.6)               # the cap
+    g.rect("A3", 5.0, 1.0, 8.4, 7.0)                       # grip band
+    g.rect("A4", 9.6, 1.2, 10.8, 6.8)                      # a red stripe down it
+    g.rrect("A1", 0.8, 2.6, 2.8, 5.4, 0.7)                 # the blunt end
+    g.rect("A3", 11.6, 3.2, 13.4, 4.8)                     # a window showing it is still loaded
 
 
 def pouch(g):
@@ -412,7 +422,7 @@ held("medkit", 16, 15, 0.50, case("K2", 16, 11, True))
 held("painkillers", 16, 9, 0.34, blister)
 held("epinephrine", 20, 8, 0.40, injector("Y3", "Y5"))
 held("antidote", 20, 8, 0.38, injector("Y2", None))
-held("antidote_full", 20, 8, 0.40, injector("Y2", "Y5"))
+held("antidote_full", 19, 8, 0.40, autopen)
 
 
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
