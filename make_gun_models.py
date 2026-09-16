@@ -72,12 +72,16 @@ MATERIALS = {
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
     "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
-    "N1": ((240, 238, 232), "roll",    4.50, "rect"),   # a boxed dressing: rolled gauze
-    "N2": ((219, 216, 208), "flat",    4.50, "rect"),   # the fold lines printed on it
-    "N3": ((250, 250, 246), "flat",    4.66, "rect"),   # the cross, a shade proud so it catches light
-    "D1": ((78, 178, 92),   "flat",    4.56, "rect"),   # tier band, green
-    "D2": ((78, 148, 212),  "flat",    4.56, "rect"),   # tier band, blue
-    "D3": ((206, 62, 54),   "flat",    4.56, "rect"),   # tier band, red
+    # All six are exactly the same thickness, and that is the point. A cross a tenth of a unit proud of
+    # its band has a sliver of side face all the way round it, and that sliver is drawn - which is the
+    # thin line that kept appearing under the cross. Flush means no side face, means no line; the cross
+    # still reads, because white on red is contrast enough without geometry helping.
+    "N1": ((240, 238, 232), "roll",    3.00, "rect"),   # a boxed dressing: rolled gauze
+    "N2": ((219, 216, 208), "flat",    3.00, "rect"),   # the fold lines printed on it
+    "N3": ((250, 250, 246), "flat",    3.00, "rect"),   # the cross
+    "D1": ((78, 178, 92),   "flat",    3.00, "rect"),   # tier band, green
+    "D2": ((78, 148, 212),  "flat",    3.00, "rect"),   # tier band, blue
+    "D3": ((206, 62, 54),   "flat",    3.00, "rect"),   # tier band, red
     "W2": ((214, 211, 203), "flat",    1.85, "rect"),   # the line between wraps, printed not cut
     "W3": ((246, 244, 239), "flat",    0.55, "rect"),   # the loose end, one thickness of gauze
     "B1": ((210, 213, 220), "flat",    0.45, "rect"),   # blister foil, genuinely thin
@@ -366,10 +370,13 @@ def dressing(band):
         # One box. Not three - a stack needed air gaps to keep the mesher from welding it into a lump,
         # and every extra piece is more elements in the model and more patches in the texture atlas for
         # something nobody is going to study in a hotbar slot.
-        g.rect("N1", 0.0, 0.0, 12.0, 20.0)
-        g.chamfer(0.0, 0.0, 12.0, 20.0, 1.0)
-        g.recolour(band, 0.0, 7.0, 12.0, 13.0)
-        cross(g, 6.0, 10.0, 2.6, 0.9)
+        # A rectangle a little taller than it is wide, six units thick - a pack of dressing rather than
+        # a cube. The chamfer is set to take exactly one cell off each corner: the smallest bevel the
+        # grid can express, which is all that is wanted to stop the corners looking sharp.
+        g.rect("N1", 0.0, 0.0, 11.0, 15.0)
+        g.chamfer(0.0, 0.0, 11.0, 15.0, 0.45)
+        g.recolour(band, 0.0, 5.4, 11.0, 9.6)
+        cross(g, 5.5, 7.5, 2.1, 0.75)
     return build
 
 
@@ -456,9 +463,9 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 12, 20, 0.20, dressing("D1"))
-held("bandage_blue", 12, 20, 0.20, dressing("D2"))
-held("bandage_red", 12, 20, 0.20, dressing("D3"))
+held("bandage_green", 11, 15, 0.11, dressing("D1"))
+held("bandage_blue", 11, 15, 0.11, dressing("D2"))
+held("bandage_red", 11, 15, 0.11, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
