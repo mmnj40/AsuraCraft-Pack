@@ -345,14 +345,17 @@ def barricade_wood(g):
     """
     g.rect("u", 0, 0, 4, 32)                       # uprights
     g.rect("u", 28, 0, 32, 32)
-    # Five boards with daylight between them. The heights are uneven on purpose - salvaged timber is
-    # whatever was on the skip, and a perfectly regular fence reads as a fence rather than a barricade.
-    for index, (bottom, thick, shade) in enumerate(
-            [(2, 6, "T"), (9, 5, "t"), (15, 6, "T"), (22, 5, "t"), (28, 4, "T")]):
-        left = 1 if index % 2 else 2
-        g.rect(shade, left, bottom, 32 - left, bottom + thick)
-    g.rect("t", 13, 1, 19, 31)                     # the batten down the middle
-    for y in (4, 11, 17, 24, 29):                  # nails, two to a board
+    # Boards edge to edge, not a fence. Whoever nailed this up was being shot at, and the first thing
+    # he would have done is close the gaps - a panel you can be seen through is a panel that gets you
+    # killed. What is left is a knot hole and two slivers where the timber did not quite meet, which is
+    # enough to say "boards" without leaving anybody a firing slit.
+    for bottom, thick, shade in [(0, 7, "T"), (7, 6, "t"), (13, 7, "T"), (20, 6, "t"), (26, 6, "T")]:
+        g.rect(shade, 1, bottom, 31, bottom + thick)
+    g.erase(12.0, 12.6, 13.0, 13.4)                # the gap where two boards meet
+    g.erase(20.0, 19.6, 21.2, 20.4)
+    g.erase(8.4, 24.0, 9.6, 25.2)                  # a knot that fell out
+    g.rect("t", 13, 0, 19, 32)                     # the batten down the middle
+    for y in (3, 9, 16, 22, 28):                   # nails, two to a board
         g.rect("n", 5, y, 6, y + 1)
         g.rect("n", 26, y, 27, y + 1)
 
