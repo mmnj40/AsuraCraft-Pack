@@ -94,10 +94,10 @@ MATERIALS = {
     "Y3": ((240, 242, 246), "flat",    1.15, "round"),
     "Y4": ((186, 190, 198), "brushed", 0.70, "round"),  # steel
     "Y5": ((216, 196, 96),  "brushed", 1.50, "round"),  # a gold collar on the good one
-    "A1": ((206, 208, 212), "flat",    1.95, "round"),  # the body of an auto-injector
+    "A1": ((54, 86, 138),   "flat",    1.95, "round"),  # the body of an auto-injector
     "A2": ((58, 148, 78),   "flat",    2.05, "round"),  # its cap
-    "A3": ((44, 46, 52),    "flat",    2.00, "rect"),   # the grip band round it
-    "A4": ((222, 60, 52),   "flat",    2.02, "rect"),   # a red stripe, so it is not the green one
+    "A3": ((28, 30, 36),    "flat",    2.00, "rect"),   # the grip band round it
+    "A4": ((236, 238, 244), "flat",    2.02, "rect"),   # a white stripe down the body
     "o": ((96, 102, 114), "brushed", 3.00, "round"),  # revolver cylinder, proud of the frame
     "j": ((72, 78, 90),    "brushed", 1.95, "round"),  # revolver barrel, same steel as the frame
 }
@@ -316,45 +316,44 @@ def held(name, length, height, blocks, build):
 
 
 def roll(band):
-    """A rolled bandage, end on, drawn as simply as it can be drawn.
+    """A roll of gauze, and nothing else on it.
 
-    This is not a rifle and should not be built like one. The wraps were grooves cut into the roll and
-    the roll had a curved cross-section, so it stepped in two directions at once and came out looking
-    chewed. Everything here is now one flat slab: the wraps are printed lines of the same thickness as
-    the gauze, the rim colour is printed too, and the only real depth in the object is the tail.
+    A real one is about eleven centimetres long and four across - a stubby cylinder, not the thin disc
+    the icon for one usually is - so that is what this is now. Everything printed on it has gone: no
+    wrap lines, no groove between layers, no hole down the middle. One white capsule, one paper band
+    round the middle carrying the tier colour, one loose end. The cross-section is flat rather than
+    round, because a curved one is quantised into a handful of widths and those steps are exactly the
+    roughness this was being asked to lose.
+
+    It is drawn at twice the size it is shown at, which is the only way the edge of a curve gets
+    smoother: the steps are the grid, so the answer is more grid per object, not a different curve.
     """
     def build(g):
-        g.ellipse("W1", 6.2, 6.2, 5.4, 5.4)
-        g.ring(band, 6.2, 6.2, 5.4, 5.4, 1.0)               # the tier colour, round the rim
-        g.ring("W2", 6.2, 6.2, 4.0, 4.0, 0.36)              # two printed wraps, and no more
-        g.ring("W2", 6.2, 6.2, 2.4, 2.4, 0.36)
-        g.ellipse("W2", 6.2, 6.2, 1.0, 1.0)                 # the hole down the middle
-        g.rect("W3", 10.6, 5.8, 14.0, 6.8)                  # the end, pulled loose
-        g.rect("W3", 13.0, 2.4, 14.0, 6.6)
+        g.rrect("W1", 1.5, 2.0, 24.5, 12.0, 4.6)          # the roll
+        g.recolour(band, 10.0, 1.5, 16.0, 12.5)           # the paper band round the middle
+        g.rrect("W3", 23.0, 5.6, 29.0, 8.4, 1.2)          # the end, pulled loose
     return build
 
 
 def blister(g):
-    """Painkillers: a foil card with two rows of pills. One step of depth and nothing else."""
-    g.rrect("B1", 0.4, 0.8, 15.6, 8.2, 1.1)
-    g.rect("B3", 0.4, 4.35, 15.6, 4.65)
+    """Painkillers: a card and ten pills. No perforation, no print, no lines."""
+    g.rrect("B1", 0.8, 1.4, 27.2, 14.6, 2.2)
     for index in range(5):
-        g.ellipse("B2", 2.2 + index * 2.8, 2.55, 0.9, 1.05)
-        g.ellipse("B2", 2.2 + index * 2.8, 6.45, 0.9, 1.05)
+        g.ellipse("B2", 4.0 + index * 5.0, 4.6, 1.7, 2.0)
+        g.ellipse("B2", 4.0 + index * 5.0, 11.4, 1.7, 2.0)
 
 
 def autopen(g):
-    """The full cure: an auto-injector, not a syringe.
+    """The full cure: a sealed auto-injector, not a syringe.
 
     Twenty per cent and a hundred per cent were the same syringe with a different coloured ring, which
-    at the size these are seen is no difference at all. The one you buy is a sealed pen - a fat tube
-    with a screw cap and a grip band, no plunger and no visible needle - so the two do not share a
-    silhouette, let alone a paint job.
+    at the size these are seen is no difference at all. This one is a pen - a fat tube with a screw
+    cap, a rubber grip band and no plunger - in a deep blue nobody else on the shelf is wearing.
     """
     g.rrect("A1", 2.6, 1.2, 15.0, 6.8, 1.4)
     g.rrect("A2", 14.4, 0.8, 18.4, 7.2, 1.6)               # the cap
     g.rect("A3", 5.0, 1.0, 8.4, 7.0)                       # grip band
-    g.rect("A4", 9.6, 1.2, 10.8, 6.8)                      # a red stripe down it
+    g.rect("A4", 9.6, 1.2, 10.8, 6.8)                      # a stripe down it
     g.rrect("A1", 0.8, 2.6, 2.8, 5.4, 0.7)                 # the blunt end
     g.rect("A3", 11.6, 3.2, 13.4, 4.8)                     # a window showing it is still loaded
 
@@ -414,12 +413,12 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 15, 13, 0.34, roll("C1"))
-held("bandage_blue", 15, 13, 0.34, roll("C2"))
-held("bandage_red", 15, 13, 0.34, roll("C3"))
+held("bandage_green", 30, 14, 0.34, roll("C1"))
+held("bandage_blue", 30, 14, 0.34, roll("C2"))
+held("bandage_red", 30, 14, 0.34, roll("C3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K2", 16, 11, True))
-held("painkillers", 16, 9, 0.34, blister)
+held("painkillers", 28, 16, 0.34, blister)
 held("epinephrine", 20, 8, 0.40, injector("Y3", "Y5"))
 held("antidote", 20, 8, 0.38, injector("Y2", None))
 held("antidote_full", 19, 8, 0.40, autopen)
