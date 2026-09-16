@@ -203,13 +203,16 @@ def scope(zoom):
     return image
 
 
-def bunker_kit():
+def wall_kit():
+    """A panel seen at a slight angle, with a person's shoulders behind it for scale."""
     image = blank()
     pen = ImageDraw.Draw(image)
-    slab(pen, (2, 6, 13, 13), (92, 96, 104, 255))
-    pen.rectangle([6, 9, 9, 13], fill=(38, 40, 46, 255), outline=OUTLINE)
-    pen.polygon([(2, 6), (8, 2), (14, 6)], fill=(112, 116, 126, 255), outline=OUTLINE)
-    pen.line([3, 8, 12, 8], fill=(140, 146, 156, 255))
+    slab(pen, (1, 4, 12, 14), (118, 122, 130, 255))
+    for y in (7, 10, 13):
+        pen.line([2, y, 11, y], fill=(88, 92, 100, 255))     # the joints between courses
+    pen.line([6, 5, 6, 13], fill=(88, 92, 100, 255))
+    pen.polygon([(12, 4), (14, 6), (14, 14), (12, 14)], fill=(84, 88, 96, 255), outline=OUTLINE)
+    pen.rectangle([8, 1, 11, 4], fill=(150, 120, 92, 255), outline=OUTLINE)   # a head above it
     return image
 
 
@@ -263,7 +266,7 @@ SPRITES = {
     "scope_x2": scope(2),
     "scope_x4": scope(4),
     "scope_x8": scope(8),
-    "bunker_kit": bunker_kit(),
+    "wall_kit": wall_kit(),
     "magazine": magazine(),
     "casing_pistol": casing((196, 158, 74, 255), 5),
     "casing_rifle": casing((200, 164, 80, 255), 8),
