@@ -72,6 +72,12 @@ MATERIALS = {
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
     "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
+    "N1": ((240, 238, 232), "roll",    4.50, "rect"),   # a boxed dressing: rolled gauze
+    "N2": ((219, 216, 208), "flat",    4.50, "rect"),   # the fold lines printed on it
+    "N3": ((250, 250, 246), "flat",    4.66, "rect"),   # the cross, a shade proud so it catches light
+    "D1": ((78, 178, 92),   "flat",    4.56, "rect"),   # tier band, green
+    "D2": ((78, 148, 212),  "flat",    4.56, "rect"),   # tier band, blue
+    "D3": ((206, 62, 54),   "flat",    4.56, "rect"),   # tier band, red
     "W2": ((214, 211, 203), "flat",    1.85, "rect"),   # the line between wraps, printed not cut
     "W3": ((246, 244, 239), "flat",    0.55, "rect"),   # the loose end, one thickness of gauze
     "B1": ((210, 213, 220), "flat",    0.45, "rect"),   # blister foil, genuinely thin
@@ -337,6 +343,30 @@ def roll(band):
     return build
 
 
+def cross(g, cx, cy, arm, thick, material="N3"):
+    """A plus sign, drawn as two overlapping bars."""
+    g.rect(material, cx - thick, cy - arm, cx + thick, cy + arm)
+    g.rect(material, cx - arm, cy - thick, cx + arm, cy + thick)
+
+
+def dressing(band):
+    """A boxed dressing: a square box with one bevelled edge all the way round.
+
+    The shape is a rectangle and stays a rectangle - a rounded one turns its corner over several steps
+    and at this size that reads as a blob. What takes the hardness off is a single forty-five degree
+    cut at each corner, which is the one bevel a moulded box actually has.
+
+    The top and bottom are painted as the end of a roll rather than as a lid, so the thing reads as
+    wound cloth from above and as the edges of the wraps from the side.
+    """
+    def build(g):
+        g.rect("N1", 0.0, 0.0, 12.0, 20.0)
+        g.chamfer(0.0, 0.0, 12.0, 20.0, 1.0)
+        g.recolour(band, 0.0, 7.0, 12.0, 13.0)
+        cross(g, 6.0, 10.0, 2.6, 0.9)
+    return build
+
+
 def blister(g):
     """Painkillers: a card and ten pills. No perforation, no print, no lines."""
     g.rrect("B1", 0.8, 1.4, 27.2, 14.6, 2.2)
@@ -420,9 +450,9 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 30, 14, 0.34, roll("C1"))
-held("bandage_blue", 30, 14, 0.34, roll("C2"))
-held("bandage_red", 30, 14, 0.34, roll("C3"))
+held("bandage_green", 12, 20, 0.30, dressing("D1"))
+held("bandage_blue", 12, 20, 0.30, dressing("D2"))
+held("bandage_red", 12, 20, 0.30, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
@@ -497,6 +527,15 @@ def finish(atlas, spot, width, height, base, kind, face, rng, buried, outer):
             elif kind == "grain":
                 streak = math.sin(row * 1.9 + math.sin(row * 0.7) * 2.0)
                 colour = shade(colour, 1.0 + 0.10 * streak + rng.uniform(-0.03, 0.03))
+            elif kind == "roll":
+                # The end of a roll of cloth on the top and bottom, the edges of the wraps on the
+                # sides. The only finish that cares which face it is painting, and the reason the top
+                # of a boxed dressing reads as wound gauze rather than as a lid.
+                if flat:
+                    ring = min(column, row, width - 1 - column, height - 1 - row)
+                    colour = shade(colour, 1.0 if (ring // 2) % 2 == 0 else 0.91)
+                else:
+                    colour = shade(colour, 1.0 if (row // 3) % 2 == 0 else 0.955)
             elif kind == "glass":
                 across = (column / max(1.0, width - 1.0)) - 0.35
                 down = (row / max(1.0, height - 1.0)) - 0.3

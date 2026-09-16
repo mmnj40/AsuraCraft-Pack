@@ -121,6 +121,24 @@ class Sketch:
                     self.cells[cy][cx] = material
         return self
 
+    def chamfer(self, x0, y0, x1, y1, size):
+        """Takes a forty-five degree cut off each corner of a rectangle.
+
+        A rounded rectangle turns a corner over several steps, which on a box the size of a held item
+        reads as a blob. One step reads as a chamfer - the single bevelled edge a moulded box actually
+        has - and that is all this does: clear the cells whose distance from a corner, counted along
+        both axes together, is inside `size`.
+        """
+        for cy in self._cells_y(y0, y1):
+            for cx in self._cells_x(x0, x1):
+                x = (cx + 0.5) / RES
+                y = self.height - (cy + 0.5) / RES
+                across = min(x - x0, x1 - x)
+                up = min(y - y0, y1 - y)
+                if across + up < size:
+                    self._put(cx, cy, None)
+        return self
+
     def erase(self, x0, y0, x1, y1):
         for cy in self._cells_y(y0, y1):
             for cx in self._cells_x(x0, x1):
