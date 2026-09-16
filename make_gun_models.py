@@ -71,6 +71,10 @@ MATERIALS = {
     "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
+    "T": ((146, 104, 62),  "grain",   1.50, "soft"),   # scaffold board, the pale side up
+    "t": ((118, 82, 48),   "grain",   1.50, "soft"),   # a board that has been out in the rain longer
+    "u": ((88, 62, 38),    "grain",   2.00, "soft"),   # the uprights it is all nailed to
+    "n": ((132, 134, 140), "flat",    2.30, "rect"),   # nail heads
     "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
     # All six are exactly the same thickness, and that is the point. A cross a tenth of a unit proud of
     # its band has a sliver of side face all the way round it, and that sliver is drawn - which is the
@@ -332,6 +336,27 @@ def barricade(g):
     g.rect("E", 3, 20, 29, 21)
 
 
+def barricade_wood(g):
+    """Boards nailed across two uprights - what somebody builds when there is no concrete.
+
+    Deliberately the poorer thing. It is lighter, it is drawn in five colours of the same brown, and the
+    gaps between the boards are real gaps: anybody looking at it should be able to tell at a glance that
+    it will not last as long as the concrete one, before ever reading a number off the item.
+    """
+    g.rect("u", 0, 0, 4, 32)                       # uprights
+    g.rect("u", 28, 0, 32, 32)
+    # Five boards with daylight between them. The heights are uneven on purpose - salvaged timber is
+    # whatever was on the skip, and a perfectly regular fence reads as a fence rather than a barricade.
+    for index, (bottom, thick, shade) in enumerate(
+            [(2, 6, "T"), (9, 5, "t"), (15, 6, "T"), (22, 5, "t"), (28, 4, "T")]):
+        left = 1 if index % 2 else 2
+        g.rect(shade, left, bottom, 32 - left, bottom + thick)
+    g.rect("t", 13, 1, 19, 31)                     # the batten down the middle
+    for y in (4, 11, 17, 24, 29):                  # nails, two to a board
+        g.rect("n", 5, y, 6, y + 1)
+        g.rect("n", 26, y, 27, y + 1)
+
+
 # Held props: medicine, built exactly like a gun and shown like one. These were flat sixteen pixel
 # sprites, which next to a two hundred box rifle looked like placeholders - because that is what they
 # were. They are the same drawing pipeline now.
@@ -584,6 +609,8 @@ held("antidote_full", 24, 9, 0.38, antiviral("G4"), 5)
 PROPS = {}
 PROPS["barricade"] = Sketch(32, 32)
 barricade(PROPS["barricade"])
+PROPS["barricade_wood"] = Sketch(32, 32)
+barricade_wood(PROPS["barricade_wood"])
 
 design("pistol", 26, 16, 0.46, pistol)
 design("magnum", 26, 16, 0.48, magnum)
