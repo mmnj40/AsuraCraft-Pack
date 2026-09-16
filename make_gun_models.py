@@ -110,6 +110,23 @@ MATERIALS = {
     "A2": ((58, 148, 78),   "flat",    2.05, "round"),  # its cap
     "A3": ((28, 30, 36),    "flat",    2.00, "rect"),   # the grip band round it
     "A4": ((236, 238, 244), "flat",    2.02, "rect"),   # a white stripe down the body
+    # The pill bottle
+    "O1": ((230, 136, 44),  "flat",    3.00, "rect"),   # amber plastic
+    "O2": ((246, 246, 242), "flat",    3.00, "rect"),   # the label
+    "O3": ((74, 70, 64),    "flat",    3.00, "rect"),   # print on the label
+    "O4": ((250, 250, 246), "flat",    3.35, "rect"),   # the cap, wider than the bottle
+    # The booster syringe: square body, blue fluid, blue collar
+    "E1": ((208, 214, 222), "flat",    1.60, "rect"),   # barrel
+    "E2": ((70, 156, 226),  "flat",    1.60, "rect"),   # what is in it
+    "E3": ((42, 118, 198),  "flat",    1.78, "rect"),   # collar and cap
+    "E4": ((190, 194, 202), "flat",    0.50, "rect"),   # needle
+    "E5": ((224, 228, 234), "flat",    2.20, "rect"),   # thumb plate and finger flange
+    "E6": ((58, 64, 74),    "flat",    1.60, "rect"),   # lettering
+    # The anti-viral: bigger, green, and told apart by the colour of its collar
+    "G1": ((216, 220, 228), "flat",    2.05, "rect"),   # barrel
+    "G2": ((84, 186, 104),  "flat",    2.05, "rect"),   # serum
+    "G3": ((198, 202, 212), "flat",    2.30, "rect"),   # silver collar - the twenty per cent
+    "G4": ((218, 180, 70),  "flat",    2.30, "rect"),   # gold collar - the full cure
     "o": ((96, 102, 114), "brushed", 3.00, "round"),  # revolver cylinder, proud of the frame
     "j": ((72, 78, 90),    "brushed", 1.95, "round"),  # revolver barrel, same steel as the frame
 }
@@ -383,6 +400,61 @@ def dressing(band):
     return build
 
 
+def bottle(g):
+    """A pharmacy bottle: amber, square-shouldered, white label, white cap a shade wider."""
+    g.rect("O1", 1.0, 0.0, 11.0, 12.0)
+    g.chamfer(1.0, 0.0, 11.0, 12.0, 0.45)
+    g.recolour("O2", 1.0, 2.4, 11.0, 8.8)
+    for y in (3.2, 4.6, 6.0):
+        g.recolour("O3", 2.2, y, 9.8, y + 0.5)          # print, at the size print is at this scale
+    g.rect("O4", 0.2, 12.0, 11.8, 15.4)
+    g.chamfer(0.2, 12.0, 11.8, 15.4, 0.45)
+
+
+def booster(g):
+    """The adrenaline shot: a squared-off body, blue through it, and an obvious point on the end.
+
+    Deliberately not the same object as the anti-viral. This one is short, square and blue with a
+    stubby needle; that one is longer, rounder, green, and wears a metal collar. A player should be
+    able to tell which is which from the shape alone, before the colour has even registered.
+    """
+    g.rect("E5", 0.0, 0.4, 1.8, 6.6)                    # thumb plate
+    g.rect("E1", 1.8, 2.6, 5.0, 4.4)                    # rod
+    g.rect("E5", 4.6, 0.2, 6.2, 6.8)                    # finger flange
+    g.rect("E1", 6.2, 1.2, 15.4, 5.8)                   # body
+    g.chamfer(6.2, 1.2, 15.4, 5.8, 0.4)
+    g.recolour("E2", 7.4, 1.2, 14.6, 5.8)               # the dose
+    for x in (8.4, 10.0, 11.6):
+        g.recolour("E6", x, 2.4, x + 0.6, 4.6)          # lettering
+    g.rect("E3", 15.4, 1.0, 17.0, 6.0)                  # collar
+    g.rect("E1", 17.0, 2.6, 18.2, 4.4)                  # hub
+    g.rect("E4", 18.2, 3.0, 20.2, 4.0)                  # needle, stepping to a point
+    g.rect("E4", 20.2, 3.2, 21.2, 3.8)
+    g.rect("E4", 21.2, 3.35, 22.0, 3.65)
+
+
+def antiviral(collar):
+    """The anti-viral: longer and heavier than the booster, green, with a metal collar.
+
+    Silver is the twenty per cent, gold is the cure. The collar is the only difference between them
+    because everything else about the two is the same drug at a different strength - and a player
+    reading a floor full of loot needs one glance to know which they have found.
+    """
+    def build(g):
+        g.rect("E5", 0.0, 0.5, 2.0, 8.5)
+        g.rect("G1", 2.0, 3.4, 6.0, 5.6)
+        g.rect("E5", 5.6, 0.0, 7.2, 9.0)
+        g.rect("G1", 7.2, 1.4, 17.2, 7.6)
+        g.chamfer(7.2, 1.4, 17.2, 7.6, 0.5)
+        g.recolour("G2", 8.5, 1.4, 16.2, 7.6)
+        g.rect(collar, 17.2, 1.2, 19.2, 7.8)
+        g.rect("G1", 19.2, 3.4, 20.6, 5.6)
+        g.rect("E4", 20.6, 4.0, 22.6, 5.0)
+        g.rect("E4", 22.6, 4.2, 23.4, 4.8)
+        g.rect("E4", 23.4, 4.35, 24.0, 4.65)
+    return build
+
+
 def blister(g):
     """Painkillers: a card and ten pills. No perforation, no print, no lines."""
     g.rrect("B1", 0.8, 1.4, 27.2, 14.6, 2.2)
@@ -471,10 +543,11 @@ held("bandage_blue", 12, 14, 0.22, dressing("D2"))
 held("bandage_red", 12, 14, 0.22, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
-held("painkillers", 28, 16, 0.34, blister)
-held("epinephrine", 20, 8, 0.40, injector("Y3", "Y5"))
-held("antidote", 20, 8, 0.38, injector("Y2", None))
-held("antidote_full", 19, 8, 0.40, autopen)
+held("pills", 28, 16, 0.26, blister)
+held("painkillers", 12, 16, 0.19, bottle)
+held("epinephrine", 22, 7, 0.34, booster)
+held("antidote", 24, 9, 0.38, antiviral("G3"))
+held("antidote_full", 24, 9, 0.38, antiviral("G4"))
 
 
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
@@ -657,7 +730,10 @@ def display(length, height, blocks, tilt=0.0, drop=0.0):
     # In the slot: the same ordering, compressed. Linear would put a bandage at a fourteenth of a
     # sniper rifle and leave nothing to look at.
     share = min(1.0, (blocks / 1.25) ** 0.45)
-    slot = round(16.0 / span * share * 0.92, 4)
+    # 1.24 rather than 0.92: the footprints were measured through this very transform and the largest
+    # thing on the server only reached sixty-nine per cent of the square, so there was a third of the
+    # slot going spare on every icon.
+    slot = round(16.0 / span * share * 1.24, 4)
     turn = round(-tilt, 2) or 0
     return {
         "thirdperson_righthand": {
