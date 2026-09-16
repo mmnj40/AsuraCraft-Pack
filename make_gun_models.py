@@ -363,21 +363,13 @@ def dressing(band):
         # Three of them, because one box on its own is a box. Two lying down with the third stood up
         # against them gives the item a silhouette instead of an outline, and it is how dressings
         # actually sit in a kit bag.
-        # Each one is left a gap from the next. Stacked flush they share a material, the mesher merges
-        # them into a single lump and the stack reads as one blob with dents in it; a third of a unit of
-        # air is invisible at this size and is the whole difference between three boxes and one.
-        g.rect("N1", 0.0, 0.0, 15.2, 5.6)                 # bottom, lying flat
-        g.chamfer(0.0, 0.0, 15.2, 5.6, 0.8)
-        g.recolour(band, 2.4, 0.0, 5.4, 5.6)
-
-        g.rect("N1", 3.0, 6.0, 18.2, 11.6)                # middle, lying flat, pushed along
-        g.chamfer(3.0, 6.0, 18.2, 11.6, 0.8)
-        g.recolour(band, 12.6, 6.0, 15.6, 11.6)
-
-        g.rect("N1", 5.4, 12.0, 13.0, 21.6)               # top, stood on end
-        g.chamfer(5.4, 12.0, 13.0, 21.6, 0.8)
-        g.recolour(band, 5.4, 14.6, 13.0, 19.0)
-        cross(g, 9.2, 16.8, 2.1, 0.7)
+        # One box. Not three - a stack needed air gaps to keep the mesher from welding it into a lump,
+        # and every extra piece is more elements in the model and more patches in the texture atlas for
+        # something nobody is going to study in a hotbar slot.
+        g.rect("N1", 0.0, 0.0, 12.0, 20.0)
+        g.chamfer(0.0, 0.0, 12.0, 20.0, 1.0)
+        g.recolour(band, 0.0, 7.0, 12.0, 13.0)
+        cross(g, 6.0, 10.0, 2.6, 0.9)
     return build
 
 
@@ -464,9 +456,9 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 18, 22, 0.24, dressing("D1"))
-held("bandage_blue", 18, 22, 0.24, dressing("D2"))
-held("bandage_red", 18, 22, 0.24, dressing("D3"))
+held("bandage_green", 12, 20, 0.20, dressing("D1"))
+held("bandage_blue", 12, 20, 0.20, dressing("D2"))
+held("bandage_red", 12, 20, 0.20, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
