@@ -336,12 +336,23 @@ def barricade(g):
 # sprites, which next to a two hundred box rifle looked like placeholders - because that is what they
 # were. They are the same drawing pipeline now.
 HELD = {}
+HELD_FRAMES = {}
 
 
-def held(name, length, height, blocks, build):
+def held(name, length, height, blocks, build, frames=0, rock=None):
+    """Registers one item, and optionally the frames of it being used.
+
+    Two kinds of animation, because two kinds of object. A syringe changes shape when it is used - the
+    plunger goes down, the dose empties - so its frames are separate drawings, each with its own
+    texture. A medkit does not change shape at all; what changes is how it is being held, so its frames
+    are the same drawing with a different transform, which costs a file of two hundred bytes rather
+    than another copy of the model.
+    """
     sketch = Sketch(length, height)
     build(sketch)
     HELD[name] = (sketch, blocks)
+    if frames:
+        HELD_FRAMES[name] = (frames, build, rock)
 
 
 def roll(band):
@@ -411,21 +422,25 @@ def bottle(g):
     g.chamfer(0.2, 12.0, 11.8, 15.4, 0.45)
 
 
-def booster(g):
+def booster(g, phase=0.0):
     """The adrenaline shot: a squared-off body, blue through it, and an obvious point on the end.
 
     Deliberately not the same object as the anti-viral. This one is short, square and blue with a
     stubby needle; that one is longer, rounder, green, and wears a metal collar. A player should be
     able to tell which is which from the shape alone, before the colour has even registered.
     """
-    g.rect("E5", 0.0, 0.4, 1.8, 6.6)                    # thumb plate
-    g.rect("E1", 1.8, 2.6, 5.0, 4.4)                    # rod
+    travel = phase * 4.0                                # how far the thumb has pushed it in
+    g.rect("E5", travel, 0.4, 1.8 + travel, 6.6)        # thumb plate
+    g.rect("E1", 1.8 + travel, 2.6, 6.2, 4.4)           # rod, swallowed as it goes
     g.rect("E5", 4.6, 0.2, 6.2, 6.8)                    # finger flange
     g.rect("E1", 6.2, 1.2, 15.4, 5.8)                   # body
     g.chamfer(6.2, 1.2, 15.4, 5.8, 0.4)
     g.recolour("E2", 7.4, 1.2, 14.6, 5.8)               # the dose
     for x in (8.4, 10.0, 11.6):
         g.recolour("E6", x, 2.4, x + 0.6, 4.6)          # lettering
+    if phase > 0:
+        # The dose leaves from the back, so what is behind the plunger head is empty barrel.
+        g.recolour("E1", 7.4, 1.2, 7.4 + phase * 7.2, 5.8)
     g.rect("E3", 15.4, 1.0, 17.0, 6.0)                  # collar
     g.rect("E1", 17.0, 2.6, 18.2, 4.4)                  # hub
     g.rect("E4", 18.2, 3.0, 20.2, 4.0)                  # needle, stepping to a point
@@ -441,13 +456,16 @@ def antiviral(collar):
     sees the plate and very little else; a mark only at the far end is a mark he has to turn the item
     over to read.
     """
-    def build(g):
-        g.rect(collar, 0.0, 0.5, 2.0, 8.5)
-        g.rect("G1", 2.0, 3.4, 6.0, 5.6)
+    def build(g, phase=0.0):
+        travel = phase * 3.2
+        g.rect(collar, travel, 0.5, 2.0 + travel, 8.5)
+        g.rect("G1", 2.0 + travel, 3.4, 6.0, 5.6)
         g.rect("E5", 5.6, 0.0, 7.2, 9.0)
         g.rect("G1", 7.2, 1.4, 17.2, 7.6)
         g.chamfer(7.2, 1.4, 17.2, 7.6, 0.5)
         g.recolour("G2", 8.5, 1.4, 16.2, 7.6)
+        if phase > 0:
+            g.recolour("G1", 8.5, 1.4, 8.5 + phase * 7.7, 7.6)
         g.rect(collar, 17.2, 1.2, 19.2, 7.8)
         g.rect("G1", 19.2, 3.4, 20.6, 5.6)
         g.rect("E4", 20.6, 4.0, 22.6, 5.0)
@@ -456,12 +474,19 @@ def antiviral(collar):
     return build
 
 
-def blister(g):
-    """Painkillers: a card and ten pills. No perforation, no print, no lines."""
+def blister(g, phase=0.0):
+    """Painkillers: a card and ten pills. No perforation, no print, no lines.
+
+    Taking them empties the card a few pockets at a time, which is the whole animation: there is no
+    pose a hand can be in that says "swallowing" at this size, but a card that is emptying says it.
+    """
     g.rrect("B1", 0.8, 1.4, 27.2, 14.6, 2.2)
+    gone = int(round(phase * 10))
     for index in range(5):
-        g.ellipse("B2", 4.0 + index * 5.0, 4.6, 1.7, 2.0)
-        g.ellipse("B2", 4.0 + index * 5.0, 11.4, 1.7, 2.0)
+        if index * 2 >= gone:
+            g.ellipse("B2", 4.0 + index * 5.0, 4.6, 1.7, 2.0)
+        if index * 2 + 1 >= gone:
+            g.ellipse("B2", 4.0 + index * 5.0, 11.4, 1.7, 2.0)
 
 
 def autopen(g):
@@ -542,13 +567,16 @@ def injector(fluid, collar):
 held("bandage_green", 12, 14, 0.22, dressing("D1"))
 held("bandage_blue", 12, 14, 0.22, dressing("D2"))
 held("bandage_red", 12, 14, 0.22, dressing("D3"))
-held("firstaid", 12, 11, 0.38, pouch)
-held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
-held("pills", 28, 16, 0.26, blister)
-held("painkillers", 12, 16, 0.19, bottle)
-held("epinephrine", 22, 7, 0.34, booster)
-held("antidote", 24, 9, 0.38, antiviral("G3"))
-held("antidote_full", 24, 9, 0.38, antiviral("G4"))
+# The four numbers after the builder are the frames of it in use. A case is worked rather than
+# changed, so it only rocks; a syringe and a blister card actually change, so they are redrawn.
+held("firstaid", 12, 11, 0.38, pouch, 4, [(9, 0.03), (16, 0.05), (9, 0.03)])
+held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True), 4,
+     [(9, 0.03), (16, 0.05), (9, 0.03)])
+held("pills", 28, 16, 0.26, blister, 5)
+held("painkillers", 12, 16, 0.19, bottle, 4, [(12, 0.02), (22, 0.04), (12, 0.02)])
+held("epinephrine", 22, 7, 0.34, booster, 5)
+held("antidote", 24, 9, 0.38, antiviral("G3"), 5)
+held("antidote_full", 24, 9, 0.38, antiviral("G4"), 5)
 
 
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
@@ -830,7 +858,35 @@ def main():
         with io.open(os.path.join(ITEMS, name + ".json"), "w", encoding="utf-8") as out:
             json.dump({"model": {"type": "minecraft:model",
                                  "model": "asuracraft:item/" + name}}, out, indent=1)
-        print("  %-14s held -> %3d boxes" % (name, len(built)))
+
+        spare = 0
+        if name in HELD_FRAMES:
+            count, builder, rock = HELD_FRAMES[name]
+            for index in range(1, count):
+                tag = name + "_" + str(index)
+                if rock is not None:
+                    # Same object, held differently: a parent and a transform, nothing more.
+                    tilt, drop = rock[(index - 1) % len(rock)]
+                    frame = {"parent": "asuracraft:item/" + name,
+                             "display": display(sketch.length, sketch.height, blocks, tilt, drop)}
+                else:
+                    step = Sketch(sketch.length, sketch.height)
+                    builder(step, index / float(count - 1))
+                    picture, parts, _ = build(tag, step)
+                    picture.save(os.path.join(TEXTURES, "gun_" + tag + ".png"))
+                    frame = {"textures": {"t": "asuracraft:item/gun_" + tag,
+                                          "particle": "asuracraft:item/gun_" + tag},
+                             "elements": parts,
+                             "display": display(sketch.length, sketch.height, blocks),
+                             "gui_light": "front"}
+                with io.open(os.path.join(MODELS, tag + ".json"), "w", encoding="utf-8") as out:
+                    json.dump(frame, out, separators=(",", ":"))
+                with io.open(os.path.join(ITEMS, tag + ".json"), "w", encoding="utf-8") as out:
+                    json.dump({"model": {"type": "minecraft:model",
+                                         "model": "asuracraft:item/" + tag}}, out, indent=1)
+                spare += 1
+        print("  %-14s held -> %3d boxes%s"
+              % (name, len(built), (" + %d frames" % spare) if spare else ""))
 
     for name, (sketch, blocks) in GUNS.items():
         image, built, scale = build(name, sketch)
