@@ -826,16 +826,6 @@ def main():
     for name, sketch in PROPS.items():
         image, built, scale = build(name, sketch)
         image.save(os.path.join(TEXTURES, "gun_" + name + ".png"))
-        # A riot shield rather than a flat sheet: the middle stands proud and the two ends fall back,
-        # so a man behind it is wrapped rather than merely hidden. Nothing about the shape changes what
-        # it stops - the barriers underneath are square blocks whatever is drawn over them - so the
-        # curve is free, and it is the difference between a piece of cover and a fence panel.
-        for box in built:
-            middle = (box["from"][0] + box["to"][0]) / 2.0
-            across = max(-1.0, min(1.0, (middle - 8.0) / 16.0))
-            push = -2.6 * (1.0 - across * across)
-            box["from"][2] += push
-            box["to"][2] += push
         # A prop is drawn two blocks tall from the floor up, so its middle sits eight units above the
         # point every display transform turns about. Left alone that is exactly what happens in the
         # inventory: the panel is scaled down about a point near its feet and floats up out of the top
