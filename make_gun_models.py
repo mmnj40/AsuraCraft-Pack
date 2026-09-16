@@ -436,12 +436,13 @@ def booster(g):
 def antiviral(collar):
     """The anti-viral: longer and heavier than the booster, green, with a metal collar.
 
-    Silver is the twenty per cent, gold is the cure. The collar is the only difference between them
-    because everything else about the two is the same drug at a different strength - and a player
-    reading a floor full of loot needs one glance to know which they have found.
+    Silver is the twenty per cent, gold is the cure. Both ends carry it - the collar at the needle and
+    the thumb plate at the back - because a syringe held in the hand points away from the player, who
+    sees the plate and very little else; a mark only at the far end is a mark he has to turn the item
+    over to read.
     """
     def build(g):
-        g.rect("E5", 0.0, 0.5, 2.0, 8.5)
+        g.rect(collar, 0.0, 0.5, 2.0, 8.5)
         g.rect("G1", 2.0, 3.4, 6.0, 5.6)
         g.rect("E5", 5.6, 0.0, 7.2, 9.0)
         g.rect("G1", 7.2, 1.4, 17.2, 7.6)
