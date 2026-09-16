@@ -356,30 +356,43 @@ def build(name, sketch):
 
 
 def display(length, blocks, tilt=0.0, drop=0.0):
-    """Where the gun sits in the hand, and - at last - how big it is.
+    """Where the gun sits in the hand, which way it points, and how big it is.
 
-    A quarter turn points the muzzle, which is +x, where the player is looking. The scale comes from
-    how long the weapon should actually appear: a pistol is under half a block, a rifle is over one.
-    The previous version used a single constant for every weapon, which is why a pistol arrived in the
-    hand the same length as a rifle and looked absurd.
+    The direction was wrong for a long time and is worth writing down. Minecraft turns a display
+    transform about +Y the right-handed way, so a model laid along +x - which every gun here is - has
+    its nose sent to +z by `rotation.y = -90` and to -z by `+90`. In the hand, -z is away from the
+    player. The transform was copied from `item/handheld`, which uses -90 and is correct for a sword
+    because a sword's texture runs diagonally and the roll dominates; applied to something built
+    straight along one axis it simply turns the weapon round. Every gun was aimed at its owner.
+
+    So: +90 in the right hand, -90 in the left, matching the mirrored convention vanilla uses. The
+    reload tilt is negated with it, because the same tilt that dipped a backwards muzzle raises a
+    forwards one.
+
+    The scale comes from how long the weapon should actually appear - a pistol under half a block, a
+    rifle over one - rather than from one constant applied to all of them.
     """
     held = round(blocks * 16.0 / length, 4)
+    turn = round(-tilt, 2) or 0
     return {
         "thirdperson_righthand": {
-            "rotation": [tilt, -90, 0], "translation": [0, 3.0 - drop, 0], "scale": [held] * 3},
+            "rotation": [turn, 90, 0], "translation": [0, 3.0 - drop, 0], "scale": [held] * 3},
         "thirdperson_lefthand": {
-            "rotation": [tilt, 90, 0], "translation": [0, 3.0 - drop, 0], "scale": [held] * 3},
+            "rotation": [turn, -90, 0], "translation": [0, 3.0 - drop, 0], "scale": [held] * 3},
         "firstperson_righthand": {
-            "rotation": [tilt, -90, 0], "translation": [0.8, 2.2 - drop, 1.2],
+            "rotation": [turn, 90, 0], "translation": [0.8, 2.2 - drop, 1.2],
             "scale": [round(held * 1.15, 4)] * 3},
         "firstperson_lefthand": {
-            "rotation": [tilt, 90, 0], "translation": [0.8, 2.2 - drop, 1.2],
+            "rotation": [turn, -90, 0], "translation": [0.8, 2.2 - drop, 1.2],
             "scale": [round(held * 1.15, 4)] * 3},
-        "gui": {"rotation": [30, 135, 0], "translation": [0, 0, 0],
+        # In a slot the muzzle should point right and away, which is +45 rather than the 135 that had
+        # it pointing left and away - the same error as the hand, seen from a different angle.
+        "gui": {"rotation": [30, 45, 0], "translation": [0, 0, 0],
                 "scale": [round(13.5 / length, 4)] * 3},
         "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0],
                    "scale": [round(8.0 / length, 4)] * 3},
-        "fixed": {"rotation": [0, 90, 0], "translation": [0, 0, 0],
+        # In an item frame a weapon is shown broadside, which needs no turn at all.
+        "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0],
                   "scale": [round(15.0 / length, 4)] * 3},
     }
 
