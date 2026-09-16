@@ -71,13 +71,16 @@ MATERIALS = {
     "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
-    "W1": ((236, 234, 228), "brushed", 1.85, "soft"),  # gauze
-    "C1": ((86, 182, 96),   "flat",    1.95, "soft"),  # the green band
-    "C2": ((86, 152, 214),  "flat",    1.95, "soft"),  # the blue band
-    "C3": ((202, 66, 58),   "flat",    1.95, "soft"),  # the red band
-    "K1": ((190, 52, 46),   "brushed", 2.40, "soft"),   # medical red
-    "K2": ((234, 234, 230), "brushed", 2.60, "soft"),   # case shell
-    "K3": ((118, 122, 130), "brushed", 1.10, "soft"),   # handle and catches
+    "W1": ((238, 236, 230), "flat",    2.30, "round"),  # gauze, rolled
+    "W2": ((206, 204, 196), "flat",    2.34, "round"),  # the seam between wraps
+    "B1": ((202, 205, 212), "brushed", 0.55, "rect"),   # blister foil
+    "B2": ((230, 198, 72),  "flat",    1.15, "round"),  # a pill under it
+    "C1": ((86, 182, 96),   "flat",    2.36, "round"),  # the green wrapper
+    "C2": ((86, 152, 214),  "flat",    2.36, "round"),  # the blue wrapper
+    "C3": ((202, 66, 58),   "flat",    2.36, "round"),  # the red wrapper
+    "K1": ((198, 54, 48),   "flat",    2.95, "soft"),   # medical red, standing proud
+    "K2": ((234, 234, 230), "flat",    2.60, "soft"),   # case shell
+    "K3": ((104, 108, 118), "brushed", 1.30, "soft"),   # handle, seam and catches
     "P1": ((224, 188, 62),  "brushed", 1.90, "round"),  # pill bottle
     "P2": ((240, 240, 236), "brushed", 2.00, "round"),  # its cap
     "Y1": ((222, 230, 238), "glass",   1.40, "round"),  # syringe barrel
@@ -303,57 +306,69 @@ def held(name, length, height, blocks, build):
 
 
 def roll(band):
-    """A roll of gauze: a cylinder end-on, with a coloured band round the middle of it."""
+    """A rolled bandage lying on its side.
+
+    The first version drew a circle, which with a round cross-section came out as a ball with a ribbon
+    round it - the thing a bandage looks least like. A roll seen from the side is a rectangle with its
+    ends taken off; only the cross-section is a circle, and that is the extruder's job, not the
+    drawing's.
+    """
     def build(g):
-        g.ellipse("W1", 6, 6, 5.6, 5.6)
-        g.recolour(band, 0, 4.4, 12, 7.6)
-        g.ellipse("K3", 6, 6, 1.1, 1.1)          # the hole through the middle
+        g.rrect("W1", 0.4, 2.2, 11.2, 9.4, 1.7)
+        g.stripe("W2", 1.4, 2.4, 10.4, 9.2, 2.0, 0.3)      # where each wrap overlaps the last
+        g.recolour(band, 4.2, 2.0, 7.8, 9.6)               # the paper wrapper round the middle
+        g.rrect("W1", 9.8, 4.6, 13.2, 6.2, 0.5)            # the loose end, hanging off
     return build
+
+
+def blister(g):
+    """Painkillers as a blister pack.
+
+    A bottle drawn as a cylinder came out as a stack of rings, and even drawn well a bottle is a shape
+    the eye has to work at. A foil card with a row of pills pressed into it is unmistakable at any size,
+    which for an item seen for a fifth of a second in a hotbar is the only thing that matters.
+    """
+    g.rrect("B1", 0.5, 1.0, 13.5, 7.0, 0.9)
+    for index in range(5):
+        g.ellipse("B2", 2.1 + index * 2.45, 4.0, 0.95, 1.7)
 
 
 def case(shell, wide, tall, latch):
-    """A hard case with a handle, a seam and a cross on the front."""
+    """A hard case: a handle you can see through, a seam round the lid, and a cross standing proud."""
     def build(g):
-        g.rrect("K3", wide / 2 - 1.4, tall, wide / 2 + 1.4, tall + 2.2, 0.6)   # handle
-        g.erase(wide / 2 - 0.9, tall, wide / 2 + 0.9, tall + 1.5)
-        g.rrect(shell, 0, 0, wide, tall, 1.0)
-        g.rect("K3", 0, tall * 0.55, wide, tall * 0.55 + 0.7)                  # the seam
-        g.rect("K1", wide / 2 - 1.1, tall * 0.18, wide / 2 + 1.1, tall * 0.82)
-        g.rect("K1", wide / 2 - 3.0, tall * 0.42, wide / 2 + 3.0, tall * 0.58)
+        g.rrect("K3", wide / 2 - 2.0, tall - 0.4, wide / 2 + 2.0, tall + 2.6, 0.7)
+        g.erase(wide / 2 - 1.2, tall + 0.4, wide / 2 + 1.2, tall + 1.9)
+        g.rrect(shell, 0, 0, wide, tall, 1.2)
+        g.rect("K3", 0, tall * 0.58, wide, tall * 0.58 + 0.6)
+        g.rect("K1", wide / 2 - 1.2, tall * 0.16, wide / 2 + 1.2, tall * 0.84)
+        g.rect("K1", wide / 2 - 3.4, tall * 0.40, wide / 2 + 3.4, tall * 0.60)
         if latch:
-            g.rect("K3", wide * 0.18, tall * 0.5, wide * 0.3, tall * 0.62)
-            g.rect("K3", wide * 0.7, tall * 0.5, wide * 0.82, tall * 0.62)
+            g.rect("K3", wide * 0.14, tall * 0.50, wide * 0.28, tall * 0.68)
+            g.rect("K3", wide * 0.72, tall * 0.50, wide * 0.86, tall * 0.68)
     return build
-
-
-def bottle(g):
-    """Pills: a body, a childproof cap, and a label."""
-    g.rrect("P1", 1, 0, 7, 9.5, 0.9)
-    g.rrect("P2", 0.6, 9.5, 7.4, 12.5, 0.5)
-    g.recolour("P2", 1, 2.6, 7, 6.0)
-    g.rect("P1", 2.2, 3.6, 5.8, 4.6)
 
 
 def injector(fluid, collar):
     """A syringe, lying along the barrel so it points where the hand points."""
     def build(g):
-        g.rect("Y4", 0.0, 2.4, 3.6, 3.6)              # plunger rod
-        g.rrect("Y4", 3.0, 0.8, 4.4, 5.2, 0.4)        # thumb flange
-        g.rrect("Y1", 4.4, 1.2, 14.0, 4.8, 0.8)       # barrel
-        g.recolour(fluid, 5.2, 1.2, 12.6, 4.8)
+        g.rect("Y4", 0.0, 2.2, 3.4, 3.8)
+        g.rrect("Y4", 2.8, 0.4, 4.4, 5.6, 0.5)          # thumb flange
+        g.rrect("Y1", 4.4, 0.9, 14.2, 5.1, 0.9)         # barrel
+        g.recolour(fluid, 5.4, 0.9, 12.8, 5.1)
+        g.stripe("Y4", 6.0, 4.2, 12.0, 4.6, 1.6, 0.3)   # graduations
         if collar:
-            g.rect(collar, 12.6, 1.2, 13.8, 4.8)
-        g.rrect("Y4", 14.0, 2.2, 15.6, 3.8, 0.4)      # hub
-        g.rect("Y4", 15.6, 2.7, 18.0, 3.3)            # needle
+            g.rect(collar, 12.8, 0.9, 14.0, 5.1)
+        g.rrect("Y4", 14.2, 2.0, 15.8, 4.0, 0.4)
+        g.rect("Y4", 15.8, 2.7, 18.0, 3.3)
     return build
 
 
-held("bandage_green", 12, 12, 0.30, roll("C1"))
-held("bandage_blue", 12, 12, 0.30, roll("C2"))
-held("bandage_red", 12, 12, 0.30, roll("C3"))
-held("firstaid", 12, 9, 0.40, case("K2", 12, 9, False))
-held("medkit", 15, 11, 0.48, case("K2", 15, 11, True))
-held("painkillers", 8, 13, 0.26, bottle)
+held("bandage_green", 14, 12, 0.32, roll("C1"))
+held("bandage_blue", 14, 12, 0.32, roll("C2"))
+held("bandage_red", 14, 12, 0.32, roll("C3"))
+held("firstaid", 12, 12, 0.40, case("K2", 12, 9, False))
+held("medkit", 15, 14, 0.48, case("K2", 15, 11, True))
+held("painkillers", 14, 8, 0.30, blister)
 held("epinephrine", 18, 6, 0.36, injector("Y3", "Y5"))
 held("antidote", 18, 6, 0.34, injector("Y2", None))
 held("antidote_full", 18, 6, 0.36, injector("Y2", "Y5"))
@@ -399,49 +414,73 @@ class Atlas:
                 round((spot[0] + width) * step, 4), round((spot[1] + height) * step, 4)]
 
 
-def finish(atlas, spot, width, height, base, kind, face, rng):
-    lit = shade(base, LIGHT[face])
+def finish(atlas, spot, width, height, base, kind, face, rng, buried, outer):
+    """Paints one face: the light it catches, the shadow where it meets, and the marks on it.
+
+    Three things happen to the colour and the second is the one that was missing. The face is lit by
+    which way it points; then it is darkened by how much of it is pressed against other geometry, which
+    is what puts contact shadows into crevices and lets the eye read which part is in front of which;
+    then the tool marks, and finally an edge - a pixel of light along a border that is genuinely the
+    outline of the object rather than a seam between two boxes of the same material.
+    """
+    lit = shade(base, LIGHT[face] * (1.0 - 0.42 * buried))
     flat = face in ("up", "down")
     for row in range(height):
         for column in range(width):
             colour = lit
             if kind == "brushed":
-                colour = shade(colour, 1.0 + 0.018 * math.sin(row * 2.3)
-                               + rng.uniform(-0.010, 0.010))
+                colour = shade(colour, 1.0 + 0.022 * math.sin(row * 2.3)
+                               + rng.uniform(-0.012, 0.012))
             elif kind == "grit":
-                colour = shade(colour, 1.0 + rng.uniform(-0.08, 0.08))
+                colour = shade(colour, 1.0 + rng.uniform(-0.09, 0.09))
             elif kind == "serrate":
-                colour = shade(colour, (0.76, 1.10, 1.0)[column % 3])
+                colour = shade(colour, (0.74, 1.12, 1.0)[column % 3])
             elif kind == "checker":
-                colour = shade(colour, 1.10 if ((column // 2) + (row // 2)) % 2 == 0 else 0.90)
+                colour = shade(colour, 1.12 if ((column // 2) + (row // 2)) % 2 == 0 else 0.88)
             elif kind == "grain":
                 streak = math.sin(row * 1.9 + math.sin(row * 0.7) * 2.0)
-                colour = shade(colour, 1.0 + 0.09 * streak + rng.uniform(-0.025, 0.025))
+                colour = shade(colour, 1.0 + 0.10 * streak + rng.uniform(-0.03, 0.03))
             elif kind == "glass":
                 across = (column / max(1.0, width - 1.0)) - 0.35
                 down = (row / max(1.0, height - 1.0)) - 0.3
-                colour = shade(colour, 1.28 - 0.80 * min(1.0, across * across + down * down) ** 0.5)
-            if not flat and height > 2:
+                colour = shade(colour, 1.30 - 0.85 * min(1.0, across * across + down * down) ** 0.5)
+
+            if outer and width > 2 and height > 2:
                 if row == 0:
-                    colour = shade(colour, 1.16)
+                    colour = shade(colour, 1.28)
                 elif row == height - 1:
-                    colour = shade(colour, 0.80)
+                    colour = shade(colour, 0.78)
+                elif column == 0 or column == width - 1:
+                    colour = shade(colour, 1.08)
+            elif not flat and height > 2:
+                if row == 0:
+                    colour = shade(colour, 1.10)
+                elif row == height - 1:
+                    colour = shade(colour, 0.88)
             atlas.pixels[spot[0] + column, spot[1] + row] = colour + (255,)
 
 
 # ---------------------------------------------------------------- the model
 def build(name, sketch):
-    for scale in (5, 4, 3, 2):
+    for scale in (8, 7, 6, 5, 4, 3):
         atlas = Atlas(scale)
         rng = random.Random(name)
         try:
             out = []
             offset = max(FLOOR + 1, min(8.0 - sketch.length / 2.0, LIMIT - sketch.length - 1))
             rise = max(0.0, 8.0 - sketch.height / 2.0)
-            for material, x0, y0, z0, x1, y1, z1 in solidify(sketch, MATERIALS):
-                colour, kind, ignored, also = MATERIALS[material]
+            for box in solidify(sketch, MATERIALS):
+                colour, kind, ignored, also = MATERIALS[box["material"]]
+                x0, y0, z0 = box["from"]
+                x1, y1, z1 = box["to"]
                 faces = {}
                 for face in ("north", "south", "east", "west", "up", "down"):
+                    buried = box["buried"][face]
+                    # A face lying flat against something else is never seen. Leaving it out costs the
+                    # model nothing and hands its share of the texture to the faces that do show - which
+                    # is most of why the texture can now afford eight pixels to the unit instead of five.
+                    if buried >= 0.999:
+                        continue
                     if face in ("north", "south"):
                         units = (x1 - x0, y1 - y0)
                     elif face in ("east", "west"):
@@ -451,8 +490,11 @@ def build(name, sketch):
                     wide = max(1, int(round(units[0] * scale)))
                     high = max(1, int(round(units[1] * scale)))
                     spot = atlas.place(wide, high)
-                    finish(atlas, spot, wide, high, colour, kind, face, rng)
+                    finish(atlas, spot, wide, high, colour, kind, face, rng,
+                           buried, buried < 0.05)
                     faces[face] = {"uv": atlas.uv(spot, wide, high), "texture": "#t"}
+                if not faces:
+                    continue
                 out.append({
                     "from": [round(offset + x0, 3), round(rise + y0, 3), round(z0, 3)],
                     "to": [round(offset + x1, 3), round(rise + y1, 3), round(z1, 3)],

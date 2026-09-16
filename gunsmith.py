@@ -163,10 +163,19 @@ def quantise(value, steps, widest):
     return max(unit, round(value / unit) * unit)
 
 
+FACES = {"east": (1, 0, 0), "west": (-1, 0, 0), "up": (0, 1, 0),
+         "down": (0, -1, 0), "south": (0, 0, 1), "north": (0, 0, -1)}
+
+
 def solidify(sketch, materials, steps=5):
     """Turns the sketch into a voxel grid, then into the fewest boxes that cover it.
 
-    Returns boxes as (material, x0, y0, z0, x1, y1, z1) in model units.
+    Returns, for each box, its material, its corners in model units, and how buried each of its six
+    faces is - nought for a face standing in open air, one for a face pressed flat against something
+    else. That last number is what was missing and what made everything look like plastic: a shape
+    lit identically on every surface has no crevices, no contact shadows, and no reading of which part
+    is in front of which. Faces that come back completely buried are not drawn at all, which also hands
+    the texture back a third of its room.
     """
     wide, tall = sketch.wide, sketch.tall
     cells = sketch.cells
@@ -226,5 +235,28 @@ def solidify(sketch, materials, steps=5):
         y0 = sketch.height - (cy + deep) / float(RES)
         z0 = 8.0 + cz / float(RES)
         z1 = 8.0 + (cz + thick) / float(RES)
-        boxes.append((material, x0, y0, z0, x1, y1, z1))
+
+        # How much of each face has something pressed against it.
+        buried = {}
+        for face, (dx, dy, dz) in FACES.items():
+            covered = 0
+            total = 0
+            for s in range(span):
+                for d in range(deep):
+                    for t in range(thick):
+                        if dx and s != (span - 1 if dx > 0 else 0):
+                            continue
+                        if dy and d != (deep - 1 if dy < 0 else 0):
+                            continue
+                        if dz and t != (thick - 1 if dz > 0 else 0):
+                            continue
+                        total += 1
+                        # y runs downward in the grid and upward in the model, so "up" is -1 here.
+                        neighbour = (cx + s + dx, cy + d - dy, cz + t + dz)
+                        if neighbour in voxels:
+                            covered += 1
+            buried[face] = covered / float(total or 1)
+
+        boxes.append({"material": material, "from": (x0, y0, z0), "to": (x1, y1, z1),
+                      "buried": buried})
     return boxes
