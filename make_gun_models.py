@@ -87,6 +87,8 @@ MATERIALS = {
     "K5": ((238, 240, 236), "flat",    2.55, "soft"),   # a white cross sewn onto it
     "K6": ((166, 170, 178), "brushed", 2.50, "rect"),   # a zip
     "K7": ((214, 216, 222), "brushed", 1.45, "soft"),   # chrome latch
+    "K8": ((186, 46, 42),   "flat",    2.60, "soft"),   # the medkit's red shell
+    "K9": ((242, 244, 240), "flat",    2.95, "soft"),   # a white cross standing proud of it
     "P1": ((224, 188, 62),  "brushed", 1.90, "round"),  # pill bottle
     "P2": ((240, 240, 236), "brushed", 2.00, "round"),  # its cap
     "Y1": ((222, 230, 238), "glass",   1.40, "round"),  # syringe barrel
@@ -374,15 +376,20 @@ def pouch(g):
     g.rect("K5", 3.2, 3.2, 8.8, 4.6)
 
 
-def case(shell, wide, tall, latch):
-    """The medkit: a hard case, chrome latches, a handle with a hole through it."""
+def case(shell, cross, wide, tall, latch):
+    """The medkit: a hard case, chrome latches, a handle with a hole through it.
+
+    Red with a white cross rather than the other way round. The colour is doing a job here - this is
+    the one item on the server that puts a player back to full, and it should be the one that catches
+    the eye in a pile of loot from across a room.
+    """
     def build(g):
         g.rrect("K3", wide / 2 - 2.2, tall - 0.4, wide / 2 + 2.2, tall + 2.8, 0.7)
         g.erase(wide / 2 - 1.4, tall + 0.5, wide / 2 + 1.4, tall + 2.1)
         g.rrect(shell, 0, 0, wide, tall, 1.2)
         g.rect("K3", 0, tall * 0.60, wide, tall * 0.60 + 0.5)
-        g.rect("K1", wide / 2 - 1.3, tall * 0.14, wide / 2 + 1.3, tall * 0.86)
-        g.rect("K1", wide / 2 - 3.6, tall * 0.38, wide / 2 + 3.6, tall * 0.62)
+        g.rect(cross, wide / 2 - 1.3, tall * 0.14, wide / 2 + 1.3, tall * 0.86)
+        g.rect(cross, wide / 2 - 3.6, tall * 0.38, wide / 2 + 3.6, tall * 0.62)
         if latch:
             g.rrect("K7", wide * 0.10, tall * 0.50, wide * 0.24, tall * 0.72, 0.3)
             g.rrect("K7", wide * 0.76, tall * 0.50, wide * 0.90, tall * 0.72, 0.3)
@@ -417,7 +424,7 @@ held("bandage_green", 30, 14, 0.34, roll("C1"))
 held("bandage_blue", 30, 14, 0.34, roll("C2"))
 held("bandage_red", 30, 14, 0.34, roll("C3"))
 held("firstaid", 12, 11, 0.38, pouch)
-held("medkit", 16, 15, 0.50, case("K2", 16, 11, True))
+held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
 held("epinephrine", 20, 8, 0.40, injector("Y3", "Y5"))
 held("antidote", 20, 8, 0.38, injector("Y2", None))
