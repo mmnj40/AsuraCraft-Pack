@@ -305,6 +305,43 @@ def sniper(g):
     g.rrect("x", 15.0, 5.6, 16.0, 7.1, 0.3)
 
 
+def heavy(g):
+    """A .50 calibre rifle. Everything about it is bigger than it needs to be, which is the point.
+
+    Drawn against the M24 deliberately: the same silhouette stretched and squared off - a straight
+    slab of a receiver instead of a sporting one, a square muzzle brake with ports cut in it, a bipod
+    folded down at the front and a rail that runs the whole length of the top. At a glance across a
+    room a player should be able to tell which of the two somebody is carrying, because one of them
+    kills him through a wall and the other does not.
+    """
+    g.rect("P", 0.0, 6.0, 2.2, 13.0)             # butt pad
+    g.rrect("s", 2.2, 6.4, 13.0, 13.0, 0.5)      # the stock is part of the receiver on this thing
+    g.rrect("W", 7.0, 13.0, 16.0, 14.2, 0.4)     # cheek piece
+    g.rrect("s", 13.0, 7.6, 34.0, 13.2, 0.4)     # receiver
+    g.rect("b", 15.0, 12.6, 20.0, 13.6)          # ejection port
+    g.rrect("n", 34.0, 9.6, 47.0, 12.2, 0.5)     # barrel
+    g.rrect("b", 47.0, 9.0, 51.0, 12.8, 0.6)     # muzzle brake
+    g.erase(48.0, 10.2, 48.8, 11.6)              # its ports
+    g.erase(49.4, 10.2, 50.2, 11.6)
+    g.rrect("S", 12.0, 16.4, 34.0, 19.4, 0.9)    # a long scope, mounted high over the rail
+    g.rrect("S", 11.0, 16.0, 13.4, 19.8, 0.6)
+    g.rrect("S", 32.2, 15.8, 34.8, 20.0, 0.6)
+    g.rect("L", 11.0, 16.4, 11.7, 19.4)
+    g.rect("L", 34.1, 16.4, 34.8, 19.4)
+    g.rect("N", 14.0, 13.2, 17.0, 16.6)          # tall mounts
+    g.rect("N", 28.0, 13.2, 31.0, 16.6)
+    g.rrect("N", 21.0, 19.4, 23.6, 20.6, 0.4)    # turret
+    g.rect("N", 13.0, 13.2, 33.0, 14.0)          # the rail itself
+    g.taper("p", 13.0, 2.0, 16.8, 7.8, top_shift=1.0)   # pistol grip
+    g.rect("d", 19.0, 3.0, 22.4, 7.8)            # magazine, square and deep
+    g.rect("m", 18.7, 2.0, 22.7, 3.1)
+    g.ring("k", 17.6, 6.0, 2.3, 1.9, 0.6)        # trigger guard
+    g.rrect("x", 16.8, 5.2, 17.8, 6.8, 0.3)      # trigger
+    g.rect("N", 38.0, 6.4, 39.4, 9.6)            # bipod, folded down
+    g.rect("N", 34.6, 4.0, 38.6, 7.0)
+    g.rect("N", 38.8, 4.0, 42.8, 7.0)
+
+
 def shotgun(g):
     g.rect("P", 0.0, 6.6, 1.8, 12.4)
     g.rrect("W", 1.8, 7.0, 10.0, 12.4, 0.6)
@@ -622,6 +659,7 @@ design("smg", 36, 17, 0.85, smg)
 design("rifle", 47, 18, 1.15, rifle)
 design("ak", 47, 17, 1.15, ak)
 design("sniper", 46, 21, 1.25, sniper)
+design("heavy", 52, 22, 1.45, heavy)
 design("shotgun", 46, 15, 1.15, shotgun)
 
 
