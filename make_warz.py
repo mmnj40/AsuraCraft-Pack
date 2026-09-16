@@ -55,13 +55,43 @@ def slab(pen, box, colour, lit=1.22, dark=0.66):
 
 
 # ---------------------------------------------------------------- the items
-def bandage():
+def bandage(band):
+    """A roll of gauze with a coloured band round it - the band is the whole of the difference."""
     image = blank()
     pen = ImageDraw.Draw(image)
     slab(pen, (2, 5, 13, 10), (232, 230, 224, 255))
     pen.rectangle([6, 3, 9, 12], fill=(244, 242, 238, 255), outline=OUTLINE)
-    pen.rectangle([7, 6, 8, 9], fill=(196, 52, 48, 255))
-    pen.rectangle([6, 7, 9, 8], fill=(196, 52, 48, 255))
+    pen.rectangle([6, 6, 9, 9], fill=band)
+    pen.line([6, 6, 9, 6], fill=shade(band, 1.3))
+    pen.line([2, 6, 5, 6], fill=shade(band, 0.9))
+    pen.line([10, 6, 13, 6], fill=shade(band, 0.9))
+    return image
+
+
+def medkit():
+    """A hard case with a carrying handle. Bigger than the first aid kit, and it should look it."""
+    image = blank()
+    pen = ImageDraw.Draw(image)
+    pen.rectangle([6, 1, 9, 3], fill=(150, 152, 158, 255), outline=OUTLINE)
+    slab(pen, (1, 3, 14, 14), (226, 226, 222, 255))
+    pen.rectangle([1, 8, 14, 9], fill=(150, 152, 158, 255))
+    pen.rectangle([6, 5, 9, 12], fill=(196, 52, 48, 255))
+    pen.rectangle([4, 7, 11, 10], fill=(196, 52, 48, 255))
+    return image
+
+
+def syringe(fluid, ring=None):
+    """A barrel, a plunger and a needle, held at an angle so it reads at sixteen pixels."""
+    image = blank()
+    pen = ImageDraw.Draw(image)
+    pen.line([13, 2, 15, 0], fill=(190, 194, 200, 255))
+    pen.rectangle([11, 3, 13, 5], fill=(150, 152, 158, 255), outline=OUTLINE)
+    pen.polygon([(3, 12), (10, 5), (12, 7), (5, 14)], fill=(228, 232, 238, 255),
+                outline=OUTLINE)
+    pen.polygon([(5, 11), (9, 7), (10, 8), (6, 12)], fill=fluid)
+    pen.rectangle([1, 12, 4, 15], fill=(150, 152, 158, 255), outline=OUTLINE)
+    if ring:
+        pen.line([9, 6, 11, 8], fill=ring)
     return image
 
 
@@ -233,24 +263,42 @@ def casing(body, hull_length, brass=(198, 160, 78, 255)):
     return image
 
 
-def magazine():
+def magazine(body, width, top, curve=0.0):
+    """A magazine, seen from the side.
+
+    The three differ the way the real ones do rather than by a shade of grey: a pistol magazine is
+    short and straight, a rifle one is long and bends forward, a sniper one is stubby and wide. At
+    sixteen pixels the outline and the curve are the only things anybody will register.
+    """
     image = blank()
     pen = ImageDraw.Draw(image)
-    slab(pen, (6, 3, 10, 13), (58, 62, 70, 255))
-    for y in range(5, 12, 2):
-        pen.line([6, y, 10, y], fill=(40, 43, 49, 255))
-    pen.rectangle([6, 2, 10, 3], fill=(96, 102, 112, 255), outline=OUTLINE)
+    left = 8 - width // 2
+    for y in range(top, 15):
+        share = (y - top) / max(1.0, 14.0 - top)
+        shift = int(round(curve * share * share))
+        x0, x1 = left + shift, left + width + shift
+        pen.rectangle([x0, y, x1, y], fill=body if y % 3 else shade(body, 0.76))
+        pen.point((x0, y), fill=OUTLINE)
+        pen.point((x1, y), fill=OUTLINE)
+        pen.point((x0 + 1, y), fill=shade(body, 1.35))
+    pen.rectangle([left - 1, top - 2, left + width + 1, top], fill=shade(body, 1.25),
+                  outline=OUTLINE)
+    bottom = int(round(curve))
+    pen.rectangle([left - 1 + bottom, 14, left + width + 1 + bottom, 15],
+                  fill=shade(body, 0.6), outline=OUTLINE)
     return image
 
 
 SPRITES = {
-    "bandage": bandage(),
+    "bandage_green": bandage((86, 182, 96, 255)),
+    "bandage_blue": bandage((86, 152, 214, 255)),
+    "bandage_red": bandage((202, 66, 58, 255)),
     "painkillers": painkillers(),
     "firstaid": firstaid(),
-    "antibiotics": antibiotics(),
-    "energy": energy(),
-    "water": water(),
-    "rations": rations(),
+    "medkit": medkit(),
+    "epinephrine": syringe((236, 238, 242, 255), (214, 198, 96, 255)),
+    "antidote": syringe((92, 178, 108, 255)),
+    "antidote_full": syringe((126, 226, 138, 255), (222, 202, 104, 255)),
     "ammo_pistol": rounds((178, 142, 66, 255), 7, 3, 3),
     "ammo_rifle": rounds((176, 150, 84, 255), 11, 3, 3),
     "ammo_shotgun": rounds((174, 54, 48, 255), 8, 4, 2),
@@ -267,7 +315,9 @@ SPRITES = {
     "scope_x4": scope(4),
     "scope_x8": scope(8),
     "wall_kit": wall_kit(),
-    "magazine": magazine(),
+    "magazine_pistol": magazine((62, 66, 76, 255), 4, 6),
+    "magazine_rifle": magazine((56, 60, 70, 255), 4, 2, curve=3.0),
+    "magazine_sniper": magazine((74, 78, 88, 255), 6, 7),
     "casing_pistol": casing((196, 158, 74, 255), 5),
     "casing_rifle": casing((200, 164, 80, 255), 8),
     "casing_sniper": casing((206, 172, 88, 255), 10),

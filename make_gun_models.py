@@ -67,6 +67,10 @@ MATERIALS = {
     "L": ((148, 210, 242), "glass",   1.35, "round"),  # lens
     "B": ((140, 147, 160), "brushed", 0.95, "round"),  # bolt handle
     "e": ((196, 158, 74),  "brushed", 0.80, "round"),  # brass
+    "Q": ((152, 150, 144), "brushed", 1.60, "soft"),   # concrete panel
+    "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
+    "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
+    "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
     "o": ((96, 102, 114), "brushed", 3.00, "round"),  # revolver cylinder, proud of the frame
     "j": ((72, 78, 90),    "brushed", 1.95, "round"),  # revolver barrel, same steel as the frame
 }
@@ -257,6 +261,27 @@ def shotgun(g):
     g.rect("e", 40.0, 12.0, 40.8, 12.8)          # bead sight
 
 
+def barricade(g):
+    """A concrete panel between two steel posts - the thing a player puts down to hide behind.
+
+    Two blocks by two in the drawing; the display entity stretches it sideways to the two and a half
+    that the collision behind it actually covers.
+    """
+    g.rect("q", 0, 0, 32, 5)                       # kerb
+    g.rrect("Q", 2, 5, 30, 26, 1.2)                # panel
+    g.rect("q", 0, 26, 32, 30)                     # capping
+    g.rect("G", 0, 0, 3, 32)                       # posts
+    g.rect("G", 29, 0, 32, 32)
+    g.stripe("E", 4, 13, 28, 14, 5.0, 1.6)         # rust
+    g.rect("E", 3, 20, 29, 21)
+
+
+# Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
+# never held, so it gets one transform, for the display entity that carries it.
+PROPS = {}
+PROPS["barricade"] = Sketch(32, 32)
+barricade(PROPS["barricade"])
+
 design("pistol", 26, 16, 0.46, pistol)
 design("magnum", 26, 16, 0.48, magnum)
 design("deagle", 30, 17, 0.56, deagle)
@@ -432,6 +457,26 @@ def main():
 
     for folder in (ITEMS, MODELS, TEXTURES):
         os.makedirs(folder, exist_ok=True)
+
+    for name, sketch in PROPS.items():
+        image, built, scale = build(name, sketch)
+        image.save(os.path.join(TEXTURES, "gun_" + name + ".png"))
+        flat = {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]}
+        model = {
+            "textures": {"t": "asuracraft:item/gun_" + name,
+                         "particle": "asuracraft:item/gun_" + name},
+            "elements": built,
+            "gui_light": "front",
+            "display": {"fixed": flat, "ground": flat, "head": flat,
+                        "gui": {"rotation": [20, -30, 0], "translation": [0, 0, 0],
+                                "scale": [0.42, 0.42, 0.42]}},
+        }
+        with io.open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as out:
+            json.dump(model, out, separators=(",", ":"))
+        with io.open(os.path.join(ITEMS, name + ".json"), "w", encoding="utf-8") as out:
+            json.dump({"model": {"type": "minecraft:model",
+                                 "model": "asuracraft:item/" + name}}, out, indent=1)
+        print("  %-8s prop -> %3d boxes" % (name, len(built)))
 
     for name, (sketch, blocks) in GUNS.items():
         image, built, scale = build(name, sketch)

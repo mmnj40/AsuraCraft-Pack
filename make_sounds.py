@@ -147,20 +147,23 @@ SHOTS = {
     "gun/rifle":   ("2853", 0.04, 1.10, ("highpass=f=70", "aecho=0.7:0.5:75|140:0.26|0.13"), 1.00, 1.0),
     "gun/sniper":  ("0397", 1.00, 1.80, ("lowpass=f=9000", "aecho=0.8:0.6:120|260|420:0.34|0.20|0.11"),
                     0.94, 1.0),
-    # Two shotguns, and the server picks between them in its config.
+    # The shotgun, and why it is not the shotgun recording.
     #
-    # A: the shotgun recording itself, cut tight and left alone. The clip was made outdoors and already
-    # has its own reverb; the first version added two more echoes on top of that and low-passed it at
-    # seven kilohertz, which is why it came out bloated instead of sharp.
-    "gun/shotgun":   ("0532", 0.065, 0.80, ("highpass=f=60", "lowpass=f=11000"), 0.97, 1.0),
-    # B: the Winchester Magnum, dropped a tone and heavily darkened. Not a shotgun recording, but a
-    # much bigger, rounder boom - which is what most people actually expect a game shotgun to sound
-    # like. Switch with `sound: "asuracraft:gun.shotgun_b"` under guns.shotgun in the server config.
-    "gun/shotgun_b": ("0397", 1.00, 1.30, ("lowpass=f=4200", "aecho=0.8:0.6:110|230:0.30|0.16"),
-                      0.86, 1.0),
-    # C: the second shot in the same shotgun recording, untouched apart from the trim. If A still has
-    # something odd in it, that something is in the first shot rather than in the processing.
-    "gun/shotgun_c": ("0532", 1.30, 0.85, ("highpass=f=55",), 1.00, 1.0),
+    # Measured against the weapons that were accepted - rifle, pistol, revolver - all of them put their
+    # energy between seventy-five and two hundred and forty hertz. The shotgun clip does not: it peaks
+    # at six hundred, seven hundred and nine hundred and sixty hertz, which is the frequency range a
+    # human throat makes vowels in, and is exactly why it was described as a duck. That resonance is in
+    # the recording, not in the processing, so no amount of trimming fixes it.
+    #
+    # The default is therefore the Winchester, darkened until nothing above four kilohertz survives -
+    # a big, low, round report whose spectrum sits in the same place as the guns that already sound
+    # right. The real shotgun clip is kept, with a fourteen decibel notch cut out of the offending
+    # band, for anyone who wants the genuine article: `sound: "asuracraft:gun.shotgun_raw"`.
+    "gun/shotgun":     ("0397", 1.00, 1.25, ("lowpass=f=3800",
+                                             "aecho=0.75:0.55:95|200:0.28|0.15"), 1.00, 1.0),
+    "gun/shotgun_raw": ("0532", 0.065, 0.80, ("highpass=f=60",
+                                              "equalizer=f=760:width_type=o:width=1.6:g=-14",
+                                              "lowpass=f=9000"), 1.00, 1.0),
     # The heavy pistols: a real .357 recording, which is a completely different noise from a 9mm and is
     # the whole reason a revolver is worth carrying. The .50 is the same recording dropped a tone and
     # given more bottom end, which is roughly what the larger case actually does to it.
