@@ -75,6 +75,14 @@ MATERIALS = {
     "t": ((118, 82, 48),   "grain",   1.50, "soft"),   # a board that has been out in the rain longer
     "u": ((88, 62, 38),    "grain",   2.00, "soft"),   # the uprights it is all nailed to
     "n": ((132, 134, 140), "flat",    2.30, "rect"),   # nail heads
+    "F1": ((74, 88, 62),   "grit",    3.10, "round"),  # grenade body, olive drab
+    "F2": ((58, 68, 48),   "grit",    3.10, "round"),  # its shadowed half
+    "F3": ((126, 130, 136), "brushed", 2.20, "soft"),  # spoon and pin
+    "F4": ((186, 156, 62), "brushed", 1.40, "soft"),   # the ring
+    "F5": ((178, 176, 170), "brushed", 3.00, "round"), # smoke canister, bare aluminium
+    "F6": ((156, 84, 40),  "flat",    3.02, "round"),  # its paint band
+    "F7": ((44, 46, 52),   "grit",    3.00, "round"),  # stun grenade body
+    "F8": ((206, 186, 84), "flat",    3.02, "round"),  # its warning band
     "W1": ((240, 238, 232), "flat",    1.85, "rect"),   # gauze, rolled - a clean slab, no terracing
     # All six are exactly the same thickness, and that is the point. A cross a tenth of a unit proud of
     # its band has a sliver of side face all the way round it, and that sliver is drawn - which is the
@@ -570,6 +578,53 @@ def antiviral(collar):
     return build
 
 
+def frag(g):
+    """A fragmentation grenade: an egg with a spoon down the side and a ring on top.
+
+    The shape everybody knows from a hundred films, drawn small: a fat body with a shaded lower half so
+    it reads as round rather than as a lump, a fuse assembly on top, and a lever running down one side
+    with a pull ring standing off it. The ring is the only part that has to be crisp - it is what says
+    "this is thrown" rather than "this is a tin of food" at inventory size.
+    """
+    g.rrect("F1", 1.0, 0.0, 13.0, 15.0, 3.6)        # body
+    g.recolour("F2", 1.0, 0.0, 13.0, 5.0)           # the half in shadow
+    g.rect("F3", 4.6, 14.4, 9.4, 17.0)              # fuse housing
+    g.rect("F3", 9.0, 8.0, 10.6, 16.2)              # the spoon down the side
+    g.ring("F4", 6.0, 18.4, 2.0, 1.6, 0.6)          # pull ring
+    g.rect("F3", 5.6, 16.6, 6.4, 17.6)              # and what holds it on
+
+
+def smoke(g):
+    """A smoke canister: a plain aluminium tube with a painted band and a spoon.
+
+    Straight-sided rather than egg-shaped, because that is the difference a player has to read in the
+    half second before they throw the wrong one. The band is the colour of the smoke it makes.
+    """
+    g.rrect("F5", 2.0, 0.0, 12.0, 16.0, 1.4)
+    g.recolour("F6", 2.0, 3.0, 12.0, 6.0)
+    g.recolour("F6", 2.0, 10.0, 12.0, 13.0)
+    g.rect("F3", 5.0, 15.6, 9.0, 18.0)
+    g.rect("F3", 8.6, 9.0, 10.2, 17.2)
+    g.ring("F4", 6.2, 19.2, 1.8, 1.4, 0.6)
+
+
+def stun(g):
+    """A stun grenade: black, banded in yellow, with ports cut through the case.
+
+    The ports are the tell - a flashbang vents its light and noise rather than fragmenting, so its body
+    is pierced where the other two are solid.
+    """
+    g.rrect("F7", 2.0, 0.0, 12.0, 15.0, 1.6)
+    g.recolour("F8", 2.0, 2.4, 12.0, 4.2)
+    g.recolour("F8", 2.0, 10.8, 12.0, 12.6)
+    for y in (6.0, 8.2):
+        g.erase(4.0, y, 5.4, y + 1.4)
+        g.erase(8.6, y, 10.0, y + 1.4)
+    g.rect("F3", 5.0, 14.6, 9.0, 17.0)
+    g.rect("F3", 8.6, 8.0, 10.2, 16.2)
+    g.ring("F4", 6.2, 18.2, 1.8, 1.4, 0.6)
+
+
 def blister(g, phase=0.0):
     """Painkillers: a card and ten pills. No perforation, no print, no lines.
 
@@ -673,6 +728,9 @@ held("painkillers", 12, 16, 0.19, bottle, 4, [(12, 0.02), (22, 0.04), (12, 0.02)
 held("epinephrine", 22, 7, 0.34, booster, 5)
 held("antidote", 24, 9, 0.38, antiviral("G3"), 5)
 held("antidote_full", 24, 9, 0.38, antiviral("G4"), 5)
+held("grenade_frag", 14, 21, 0.30, frag)
+held("grenade_smoke", 14, 21, 0.30, smoke)
+held("grenade_stun", 14, 20, 0.29, stun)
 
 
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
