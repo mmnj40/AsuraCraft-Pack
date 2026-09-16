@@ -213,6 +213,23 @@ def bunker_kit():
     return image
 
 
+def casing(body, hull_length, brass=(198, 160, 78, 255)):
+    """One empty case, lying across the frame.
+
+    Drawn on its side because that is how one lands, and because a display entity is asked to lay the
+    sprite face up - so this is the view from directly above a case on the ground.
+    """
+    image = blank()
+    pen = ImageDraw.Draw(image)
+    left = 8 - hull_length // 2
+    right = left + hull_length
+    pen.rectangle([left, 7, right, 9], fill=body, outline=OUTLINE)
+    pen.line([left + 1, 7, right - 1, 7], fill=shade(body, 1.35))
+    pen.rectangle([left - 1, 6, left + 1, 10], fill=brass, outline=OUTLINE)   # the rim
+    pen.rectangle([right - 1, 7, right, 9], fill=shade(body, 0.75))            # the open mouth
+    return image
+
+
 def magazine():
     image = blank()
     pen = ImageDraw.Draw(image)
@@ -248,6 +265,10 @@ SPRITES = {
     "scope_x8": scope(8),
     "bunker_kit": bunker_kit(),
     "magazine": magazine(),
+    "casing_pistol": casing((196, 158, 74, 255), 5),
+    "casing_rifle": casing((200, 164, 80, 255), 8),
+    "casing_sniper": casing((206, 172, 88, 255), 10),
+    "casing_shotgun": casing((172, 54, 48, 255), 7),
 }
 
 

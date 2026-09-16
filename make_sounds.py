@@ -88,11 +88,20 @@ def loudest(path):
 
 
 def pitch(ratio):
-    """Shifts pitch without changing length: resample the samples, then put the tempo back."""
+    """Shifts pitch by resampling, and lets the length change with it.
+
+    The obvious thing is to resample and then put the tempo back with atempo, so the clip keeps its
+    original length. Do not. atempo works by cutting the audio into short windows and overlapping
+    them, which on material that is almost entirely transient - a gunshot - comb-filters the result
+    into a nasal quack. Every weapon that was pitch-shifted came out sounding like a duck, and the two
+    that were left alone were the two nobody complained about.
+
+    Letting the length move with the pitch is what a tape machine does and is exactly right here: a
+    shorter barrel really does give a shorter, higher report.
+    """
     if abs(ratio - 1.0) < 0.001:
         return []
-    # atempo only accepts 0.5 to 2.0, which is far wider than anything used here.
-    return ["asetrate=44100*%.4f" % ratio, "aresample=44100", "atempo=%.4f" % (1.0 / ratio)]
+    return ["asetrate=44100*%.4f" % ratio, "aresample=44100"]
 
 
 def render(name, source, start, length, filters=(), shift=1.0, headroom=1.0):
@@ -103,9 +112,11 @@ def render(name, source, start, length, filters=(), shift=1.0, headroom=1.0):
     chain += pitch(shift)
     chain += list(filters)
     # A fade at each end. Without the tail fade the file stops on a step, and a step is a click the
-    # player hears on top of every single shot.
+    # player hears on top of every single shot. The fade is placed against the length the clip has
+    # AFTER resampling, which is not the length it was trimmed to.
+    played = length / shift
     chain += ["afade=t=in:st=0:d=0.002",
-              "afade=t=out:st=%.3f:d=%.3f" % (max(0.0, length - 0.06), 0.06)]
+              "afade=t=out:st=%.3f:d=%.3f" % (max(0.0, played - 0.06), 0.06)]
 
     rough = path + ".tmp.wav"
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i",
@@ -147,6 +158,9 @@ SHOTS = {
     # like. Switch with `sound: "asuracraft:gun.shotgun_b"` under guns.shotgun in the server config.
     "gun/shotgun_b": ("0397", 1.00, 1.30, ("lowpass=f=4200", "aecho=0.8:0.6:110|230:0.30|0.16"),
                       0.86, 1.0),
+    # C: the second shot in the same shotgun recording, untouched apart from the trim. If A still has
+    # something odd in it, that something is in the first shot rather than in the processing.
+    "gun/shotgun_c": ("0532", 1.30, 0.85, ("highpass=f=55",), 1.00, 1.0),
     # The heavy pistols: a real .357 recording, which is a completely different noise from a 9mm and is
     # the whole reason a revolver is worth carrying. The .50 is the same recording dropped a tone and
     # given more bottom end, which is roughly what the larger case actually does to it.
