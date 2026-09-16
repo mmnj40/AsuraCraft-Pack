@@ -136,7 +136,17 @@ SHOTS = {
     "gun/rifle":   ("2853", 0.04, 1.10, ("highpass=f=70", "aecho=0.7:0.5:75|140:0.26|0.13"), 1.00, 1.0),
     "gun/sniper":  ("0397", 1.00, 1.80, ("lowpass=f=9000", "aecho=0.8:0.6:120|260|420:0.34|0.20|0.11"),
                     0.94, 1.0),
-    "gun/shotgun": ("0532", 0.065, 1.25, ("lowpass=f=7000", "aecho=0.7:0.5:90|180:0.28|0.15"), 0.97, 1.0),
+    # Two shotguns, and the server picks between them in its config.
+    #
+    # A: the shotgun recording itself, cut tight and left alone. The clip was made outdoors and already
+    # has its own reverb; the first version added two more echoes on top of that and low-passed it at
+    # seven kilohertz, which is why it came out bloated instead of sharp.
+    "gun/shotgun":   ("0532", 0.065, 0.80, ("highpass=f=60", "lowpass=f=11000"), 0.97, 1.0),
+    # B: the Winchester Magnum, dropped a tone and heavily darkened. Not a shotgun recording, but a
+    # much bigger, rounder boom - which is what most people actually expect a game shotgun to sound
+    # like. Switch with `sound: "asuracraft:gun.shotgun_b"` under guns.shotgun in the server config.
+    "gun/shotgun_b": ("0397", 1.00, 1.30, ("lowpass=f=4200", "aecho=0.8:0.6:110|230:0.30|0.16"),
+                      0.86, 1.0),
     # The heavy pistols: a real .357 recording, which is a completely different noise from a 9mm and is
     # the whole reason a revolver is worth carrying. The .50 is the same recording dropped a tone and
     # given more bottom end, which is roughly what the larger case actually does to it.
