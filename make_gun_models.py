@@ -373,10 +373,13 @@ def dressing(band):
         # A rectangle a little taller than it is wide, six units thick - a pack of dressing rather than
         # a cube. The chamfer is set to take exactly one cell off each corner: the smallest bevel the
         # grid can express, which is all that is wanted to stop the corners looking sharp.
-        g.rect("N1", 0.0, 0.0, 11.0, 15.0)
-        g.chamfer(0.0, 0.0, 11.0, 15.0, 0.45)
-        g.recolour(band, 0.0, 5.4, 11.0, 9.6)
-        cross(g, 5.5, 7.5, 2.1, 0.75)
+        g.rect("N1", 0.0, 0.0, 12.0, 14.0)
+        g.chamfer(0.0, 0.0, 12.0, 14.0, 0.45)
+        # The band is wide enough to hold the cross with room to spare. It used to be exactly as tall
+        # as the cross, so the cross's top and bottom arms ran straight into the white above and below
+        # and the thing read as a broken T.
+        g.recolour(band, 0.0, 3.6, 12.0, 10.4)
+        cross(g, 6.0, 7.0, 2.2, 0.8)
     return build
 
 
@@ -463,9 +466,9 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 11, 15, 0.11, dressing("D1"))
-held("bandage_blue", 11, 15, 0.11, dressing("D2"))
-held("bandage_red", 11, 15, 0.11, dressing("D3"))
+held("bandage_green", 12, 14, 0.22, dressing("D1"))
+held("bandage_blue", 12, 14, 0.22, dressing("D2"))
+held("bandage_red", 12, 14, 0.22, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
@@ -621,7 +624,7 @@ def build(name, sketch):
     raise MemoryError(name + " does not fit its texture")
 
 
-def display(length, blocks, tilt=0.0, drop=0.0):
+def display(length, height, blocks, tilt=0.0, drop=0.0):
     """Where the gun sits in the hand, which way it points, and how big it is.
 
     The direction was wrong for a long time and is worth writing down. Minecraft turns a display
@@ -635,10 +638,26 @@ def display(length, blocks, tilt=0.0, drop=0.0):
     reload tilt is negated with it, because the same tilt that dipped a backwards muzzle raises a
     forwards one.
 
-    The scale comes from how long the weapon should actually appear - a pistol under half a block, a
-    rifle over one - rather than from one constant applied to all of them.
+    Size, and the mistake that took several rounds to find. `blocks` is how big the thing really is -
+    its longest side, in blocks - and the hand transform used it, so weapons and medicine were the
+    right size relative to each other when held. The slot, the ground and the item frame did not: they
+    were computed from the model's length alone, which is "shrink it until it fits" and knows nothing
+    about how big the object is meant to be. A bandage eleven units long got 13.5/11 = 1.23 and a
+    medkit sixteen units long got 13.5/16 = 0.84, so the bandage was drawn half again as large as the
+    medkit in the inventory and on the floor. The slot also measured only the length, so anything
+    taller than it was long hung out of its own slot.
+
+    Now every context is driven by `blocks` and by the longest side of the model, whichever axis that
+    is, so one number decides an item's size everywhere. The slot is the one exception, and even there
+    the ordering is kept: sizes are compressed by a root so the largest weapon on the server fills the
+    square and a bandage is visibly, but not uselessly, smaller.
     """
-    held = round(blocks * 16.0 / length, 4)
+    span = float(max(length, height))
+    held = round(blocks * 16.0 / span, 4)
+    # In the slot: the same ordering, compressed. Linear would put a bandage at a fourteenth of a
+    # sniper rifle and leave nothing to look at.
+    share = min(1.0, (blocks / 1.25) ** 0.45)
+    slot = round(16.0 / span * share * 0.92, 4)
     turn = round(-tilt, 2) or 0
     return {
         "thirdperson_righthand": {
@@ -653,13 +672,13 @@ def display(length, blocks, tilt=0.0, drop=0.0):
             "scale": [round(held * 1.15, 4)] * 3},
         # In a slot the muzzle should point right and away, which is +45 rather than the 135 that had
         # it pointing left and away - the same error as the hand, seen from a different angle.
-        "gui": {"rotation": [30, 45, 0], "translation": [0, 0, 0],
-                "scale": [round(13.5 / length, 4)] * 3},
+        "gui": {"rotation": [30, 45, 0], "translation": [0, 0, 0], "scale": [slot] * 3},
+        # On the floor an item is simply its own size. That is the whole point of dropping it next to
+        # something else.
         "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0],
-                   "scale": [round(8.0 / length, 4)] * 3},
+                   "scale": [round(held * 0.9, 4)] * 3},
         # In an item frame a weapon is shown broadside, which needs no turn at all.
-        "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0],
-                  "scale": [round(15.0 / length, 4)] * 3},
+        "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [held] * 3},
     }
 
 
@@ -726,7 +745,7 @@ def main():
             "textures": {"t": "asuracraft:item/gun_" + name,
                          "particle": "asuracraft:item/gun_" + name},
             "elements": built,
-            "display": display(sketch.length, blocks),
+            "display": display(sketch.length, sketch.height, blocks),
             "gui_light": "front",
         }
         with io.open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as out:
@@ -753,7 +772,7 @@ def main():
             with io.open(os.path.join(MODELS, name + suffix + ".json"), "w",
                          encoding="utf-8") as out:
                 json.dump({"parent": "asuracraft:item/" + name + "_shape",
-                           "display": display(sketch.length, blocks, tilt, drop)},
+                           "display": display(sketch.length, sketch.height, blocks, tilt, drop)},
                           out, ensure_ascii=False, indent=1)
             with io.open(os.path.join(ITEMS, name + suffix + ".json"), "w",
                          encoding="utf-8") as out:
