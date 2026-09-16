@@ -826,15 +826,31 @@ def main():
     for name, sketch in PROPS.items():
         image, built, scale = build(name, sketch)
         image.save(os.path.join(TEXTURES, "gun_" + name + ".png"))
+        # A prop is drawn two blocks tall from the floor up, so its middle sits eight units above the
+        # point every display transform turns about. Left alone that is exactly what happens in the
+        # inventory: the panel is scaled down about a point near its feet and floats up out of the top
+        # of the slot. Every transform except the fixed one - which is the display entity in the world,
+        # and must stay life size - therefore drops it by eight units of whatever scale it is given.
         flat = {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]}
+
+        def shrink(scale, turn=0, pitch=0):
+            return {"rotation": [pitch, turn, 0],
+                    "translation": [0, round(-8.0 * scale, 2), 0],
+                    "scale": [scale, scale, scale]}
+
         model = {
             "textures": {"t": "asuracraft:item/gun_" + name,
                          "particle": "asuracraft:item/gun_" + name},
             "elements": built,
             "gui_light": "front",
-            "display": {"fixed": flat, "ground": flat, "head": flat,
-                        "gui": {"rotation": [20, -30, 0], "translation": [0, 0, 0],
-                                "scale": [0.42, 0.42, 0.42]}},
+            "display": {"fixed": flat,
+                        "gui": shrink(0.38, -30, 20),
+                        "ground": shrink(0.26),
+                        "head": shrink(0.5),
+                        "firstperson_righthand": shrink(0.26, 40),
+                        "firstperson_lefthand": shrink(0.26, -40),
+                        "thirdperson_righthand": shrink(0.28, 40),
+                        "thirdperson_lefthand": shrink(0.28, -40)},
         }
         with io.open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as out:
             json.dump(model, out, separators=(",", ":"))
