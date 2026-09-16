@@ -260,6 +260,37 @@ def rifle(g):
     g.rect("b", 24.0, 11.4, 27.0, 12.4)          # ejection port
 
 
+def marksman(g):
+    """A marksman rifle: wooden furniture, a ten round magazine, and a short scope over the breech.
+
+    Between the two things it sits between, and drawn to say so. It has the wooden stock and the long
+    barrel of a rifle somebody's grandfather would recognise, and a modern scope bolted over the top of
+    it - which is what a designated marksman's weapon actually is: a service rifle picked out of the
+    rack for being accurate, not a purpose-built sniper.
+    """
+    g.rect("P", 0.0, 6.8, 1.8, 12.6)               # butt plate
+    g.rrect("w", 1.8, 7.0, 12.0, 12.6, 0.6)        # wooden stock
+    g.erase(4.0, 8.2, 8.6, 10.2)                   # thumb hole
+    g.rrect("s", 12.0, 8.0, 26.0, 12.8, 0.5)       # receiver
+    g.rect("b", 21.0, 11.8, 24.6, 12.9)            # ejection port
+    g.rrect("w", 20.0, 6.6, 33.0, 9.2, 0.6)        # wooden forend under the barrel
+    g.rrect("n", 26.0, 9.6, 40.0, 11.8, 0.5)       # barrel
+    g.rrect("b", 40.0, 9.2, 42.4, 12.0, 0.5)       # muzzle
+    g.rrect("S", 14.0, 14.4, 27.0, 16.8, 0.8)      # a short scope, low over the receiver
+    g.rrect("S", 13.0, 14.0, 15.0, 17.2, 0.5)
+    g.rrect("S", 25.6, 14.0, 27.6, 17.2, 0.5)
+    g.rect("L", 13.0, 14.4, 13.6, 16.8)
+    g.rect("L", 27.0, 14.4, 27.6, 16.8)
+    g.rect("N", 15.4, 12.8, 17.6, 14.6)            # mounts
+    g.rect("N", 23.0, 12.8, 25.2, 14.6)
+    g.taper("p", 13.6, 2.0, 17.0, 7.8, top_shift=1.1)   # pistol grip
+    g.taper("d", 18.6, 2.6, 21.6, 8.0, bottom_shift=1.0)  # the magazine, curved and obvious
+    g.rect("m", 18.2, 1.8, 22.0, 2.8)
+    g.ring("k", 17.6, 6.2, 2.2, 1.8, 0.6)
+    g.rrect("x", 16.8, 5.4, 17.8, 6.9, 0.3)
+    g.rect("i", 34.0, 11.8, 34.8, 13.6)            # iron sight left on, ahead of the glass
+
+
 def ak(g):
     g.rect("w", 0.0, 7.2, 8.4, 12.4)             # wooden butt
     g.erase(1.6, 8.2, 6.4, 10.2)
@@ -658,6 +689,7 @@ design("deagle", 30, 17, 0.56, deagle)
 design("smg", 36, 17, 0.85, smg)
 design("rifle", 47, 18, 1.15, rifle)
 design("ak", 47, 17, 1.15, ak)
+design("marksman", 43, 18, 1.10, marksman)
 design("sniper", 46, 21, 1.25, sniper)
 design("heavy", 52, 22, 1.45, heavy)
 design("shotgun", 46, 15, 1.15, shotgun)
