@@ -360,10 +360,24 @@ def dressing(band):
     wound cloth from above and as the edges of the wraps from the side.
     """
     def build(g):
-        g.rect("N1", 0.0, 0.0, 12.0, 20.0)
-        g.chamfer(0.0, 0.0, 12.0, 20.0, 1.0)
-        g.recolour(band, 0.0, 7.0, 12.0, 13.0)
-        cross(g, 6.0, 10.0, 2.6, 0.9)
+        # Three of them, because one box on its own is a box. Two lying down with the third stood up
+        # against them gives the item a silhouette instead of an outline, and it is how dressings
+        # actually sit in a kit bag.
+        # Each one is left a gap from the next. Stacked flush they share a material, the mesher merges
+        # them into a single lump and the stack reads as one blob with dents in it; a third of a unit of
+        # air is invisible at this size and is the whole difference between three boxes and one.
+        g.rect("N1", 0.0, 0.0, 15.2, 5.6)                 # bottom, lying flat
+        g.chamfer(0.0, 0.0, 15.2, 5.6, 0.8)
+        g.recolour(band, 2.4, 0.0, 5.4, 5.6)
+
+        g.rect("N1", 3.0, 6.0, 18.2, 11.6)                # middle, lying flat, pushed along
+        g.chamfer(3.0, 6.0, 18.2, 11.6, 0.8)
+        g.recolour(band, 12.6, 6.0, 15.6, 11.6)
+
+        g.rect("N1", 5.4, 12.0, 13.0, 21.6)               # top, stood on end
+        g.chamfer(5.4, 12.0, 13.0, 21.6, 0.8)
+        g.recolour(band, 5.4, 14.6, 13.0, 19.0)
+        cross(g, 9.2, 16.8, 2.1, 0.7)
     return build
 
 
@@ -450,9 +464,9 @@ def injector(fluid, collar):
     return build
 
 
-held("bandage_green", 12, 20, 0.30, dressing("D1"))
-held("bandage_blue", 12, 20, 0.30, dressing("D2"))
-held("bandage_red", 12, 20, 0.30, dressing("D3"))
+held("bandage_green", 18, 22, 0.24, dressing("D1"))
+held("bandage_blue", 18, 22, 0.24, dressing("D2"))
+held("bandage_red", 18, 22, 0.24, dressing("D3"))
 held("firstaid", 12, 11, 0.38, pouch)
 held("medkit", 16, 15, 0.50, case("K8", "K9", 16, 11, True))
 held("painkillers", 28, 16, 0.34, blister)
@@ -501,7 +515,8 @@ class Atlas:
                 round((spot[0] + width) * step, 4), round((spot[1] + height) * step, 4)]
 
 
-def finish(atlas, spot, width, height, base, kind, face, rng, buried, outer):
+def finish(atlas, spot, width, height, base, kind, face, rng, buried, outer,
+           top_open=True, bottom_open=True):
     """Paints one face: the light it catches, the shadow where it meets, and the marks on it.
 
     Three things happen to the colour and the second is the one that was missing. The face is lit by
@@ -534,24 +549,29 @@ def finish(atlas, spot, width, height, base, kind, face, rng, buried, outer):
                 if flat:
                     ring = min(column, row, width - 1 - column, height - 1 - row)
                     colour = shade(colour, 1.0 if (ring // 2) % 2 == 0 else 0.91)
-                else:
-                    colour = shade(colour, 1.0 if (row // 3) % 2 == 0 else 0.955)
+                # The sides are left plain. They carried a fine horizontal stripe, which on a box made
+                # of stacked pieces landed on top of the seam shading and read as corrugation.
             elif kind == "glass":
                 across = (column / max(1.0, width - 1.0)) - 0.35
                 down = (row / max(1.0, height - 1.0)) - 0.3
                 colour = shade(colour, 1.30 - 0.85 * min(1.0, across * across + down * down) ** 0.5)
 
+            # The edge light, and the rule that took three goes to get right: a face's top row is only
+            # an edge if there is nothing sitting on top of the box. Stacked boxes share a border, and
+            # lighting both sides of it draws a bright line across the middle of a flat surface at
+            # every seam - which is exactly the striping that kept appearing on things built out of
+            # several pieces.
             if outer and width > 2 and height > 2:
-                if row == 0:
+                if row == 0 and top_open:
                     colour = shade(colour, 1.28)
-                elif row == height - 1:
+                elif row == height - 1 and bottom_open:
                     colour = shade(colour, 0.78)
                 elif column == 0 or column == width - 1:
                     colour = shade(colour, 1.08)
             elif not flat and height > 2:
-                if row == 0:
+                if row == 0 and top_open:
                     colour = shade(colour, 1.10)
-                elif row == height - 1:
+                elif row == height - 1 and bottom_open:
                     colour = shade(colour, 0.88)
             atlas.pixels[spot[0] + column, spot[1] + row] = colour + (255,)
 
@@ -587,7 +607,8 @@ def build(name, sketch):
                     high = max(1, int(round(units[1] * scale)))
                     spot = atlas.place(wide, high)
                     finish(atlas, spot, wide, high, colour, kind, face, rng,
-                           buried, buried < 0.05)
+                           buried, buried < 0.05,
+                           box["buried"]["up"] < 0.5, box["buried"]["down"] < 0.5)
                     faces[face] = {"uv": atlas.uv(spot, wide, high), "texture": "#t"}
                 if not faces:
                     continue
