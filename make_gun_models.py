@@ -71,6 +71,20 @@ MATERIALS = {
     "q": ((104, 102, 98),  "grit",    2.10, "soft"),   # concrete kerb and cap
     "G": ((72, 76, 84),    "brushed", 2.10, "soft"),   # steel post
     "E": ((126, 88, 58),   "grit",    1.70, "rect"),   # rust running down it
+    "W1": ((236, 234, 228), "brushed", 1.85, "soft"),  # gauze
+    "C1": ((86, 182, 96),   "flat",    1.95, "soft"),  # the green band
+    "C2": ((86, 152, 214),  "flat",    1.95, "soft"),  # the blue band
+    "C3": ((202, 66, 58),   "flat",    1.95, "soft"),  # the red band
+    "K1": ((190, 52, 46),   "brushed", 2.40, "soft"),   # medical red
+    "K2": ((234, 234, 230), "brushed", 2.60, "soft"),   # case shell
+    "K3": ((118, 122, 130), "brushed", 1.10, "soft"),   # handle and catches
+    "P1": ((224, 188, 62),  "brushed", 1.90, "round"),  # pill bottle
+    "P2": ((240, 240, 236), "brushed", 2.00, "round"),  # its cap
+    "Y1": ((222, 230, 238), "glass",   1.40, "round"),  # syringe barrel
+    "Y2": ((92, 178, 108),  "flat",    1.15, "round"),  # what is in it
+    "Y3": ((240, 242, 246), "flat",    1.15, "round"),
+    "Y4": ((186, 190, 198), "brushed", 0.70, "round"),  # steel
+    "Y5": ((216, 196, 96),  "brushed", 1.50, "round"),  # a gold collar on the good one
     "o": ((96, 102, 114), "brushed", 3.00, "round"),  # revolver cylinder, proud of the frame
     "j": ((72, 78, 90),    "brushed", 1.95, "round"),  # revolver barrel, same steel as the frame
 }
@@ -276,6 +290,75 @@ def barricade(g):
     g.rect("E", 3, 20, 29, 21)
 
 
+# Held props: medicine, built exactly like a gun and shown like one. These were flat sixteen pixel
+# sprites, which next to a two hundred box rifle looked like placeholders - because that is what they
+# were. They are the same drawing pipeline now.
+HELD = {}
+
+
+def held(name, length, height, blocks, build):
+    sketch = Sketch(length, height)
+    build(sketch)
+    HELD[name] = (sketch, blocks)
+
+
+def roll(band):
+    """A roll of gauze: a cylinder end-on, with a coloured band round the middle of it."""
+    def build(g):
+        g.ellipse("W1", 6, 6, 5.6, 5.6)
+        g.recolour(band, 0, 4.4, 12, 7.6)
+        g.ellipse("K3", 6, 6, 1.1, 1.1)          # the hole through the middle
+    return build
+
+
+def case(shell, wide, tall, latch):
+    """A hard case with a handle, a seam and a cross on the front."""
+    def build(g):
+        g.rrect("K3", wide / 2 - 1.4, tall, wide / 2 + 1.4, tall + 2.2, 0.6)   # handle
+        g.erase(wide / 2 - 0.9, tall, wide / 2 + 0.9, tall + 1.5)
+        g.rrect(shell, 0, 0, wide, tall, 1.0)
+        g.rect("K3", 0, tall * 0.55, wide, tall * 0.55 + 0.7)                  # the seam
+        g.rect("K1", wide / 2 - 1.1, tall * 0.18, wide / 2 + 1.1, tall * 0.82)
+        g.rect("K1", wide / 2 - 3.0, tall * 0.42, wide / 2 + 3.0, tall * 0.58)
+        if latch:
+            g.rect("K3", wide * 0.18, tall * 0.5, wide * 0.3, tall * 0.62)
+            g.rect("K3", wide * 0.7, tall * 0.5, wide * 0.82, tall * 0.62)
+    return build
+
+
+def bottle(g):
+    """Pills: a body, a childproof cap, and a label."""
+    g.rrect("P1", 1, 0, 7, 9.5, 0.9)
+    g.rrect("P2", 0.6, 9.5, 7.4, 12.5, 0.5)
+    g.recolour("P2", 1, 2.6, 7, 6.0)
+    g.rect("P1", 2.2, 3.6, 5.8, 4.6)
+
+
+def injector(fluid, collar):
+    """A syringe, lying along the barrel so it points where the hand points."""
+    def build(g):
+        g.rect("Y4", 0.0, 2.4, 3.6, 3.6)              # plunger rod
+        g.rrect("Y4", 3.0, 0.8, 4.4, 5.2, 0.4)        # thumb flange
+        g.rrect("Y1", 4.4, 1.2, 14.0, 4.8, 0.8)       # barrel
+        g.recolour(fluid, 5.2, 1.2, 12.6, 4.8)
+        if collar:
+            g.rect(collar, 12.6, 1.2, 13.8, 4.8)
+        g.rrect("Y4", 14.0, 2.2, 15.6, 3.8, 0.4)      # hub
+        g.rect("Y4", 15.6, 2.7, 18.0, 3.3)            # needle
+    return build
+
+
+held("bandage_green", 12, 12, 0.30, roll("C1"))
+held("bandage_blue", 12, 12, 0.30, roll("C2"))
+held("bandage_red", 12, 12, 0.30, roll("C3"))
+held("firstaid", 12, 9, 0.40, case("K2", 12, 9, False))
+held("medkit", 15, 11, 0.48, case("K2", 15, 11, True))
+held("painkillers", 8, 13, 0.26, bottle)
+held("epinephrine", 18, 6, 0.36, injector("Y3", "Y5"))
+held("antidote", 18, 6, 0.34, injector("Y2", None))
+held("antidote_full", 18, 6, 0.36, injector("Y2", "Y5"))
+
+
 # Props are built the same way as the weapons and differ only in how they are displayed: a barricade is
 # never held, so it gets one transform, for the display entity that carries it.
 PROPS = {}
@@ -477,6 +560,23 @@ def main():
             json.dump({"model": {"type": "minecraft:model",
                                  "model": "asuracraft:item/" + name}}, out, indent=1)
         print("  %-8s prop -> %3d boxes" % (name, len(built)))
+
+    for name, (sketch, blocks) in HELD.items():
+        image, built, scale = build(name, sketch)
+        image.save(os.path.join(TEXTURES, "gun_" + name + ".png"))
+        model = {
+            "textures": {"t": "asuracraft:item/gun_" + name,
+                         "particle": "asuracraft:item/gun_" + name},
+            "elements": built,
+            "display": display(sketch.length, blocks),
+            "gui_light": "front",
+        }
+        with io.open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as out:
+            json.dump(model, out, separators=(",", ":"))
+        with io.open(os.path.join(ITEMS, name + ".json"), "w", encoding="utf-8") as out:
+            json.dump({"model": {"type": "minecraft:model",
+                                 "model": "asuracraft:item/" + name}}, out, indent=1)
+        print("  %-14s held -> %3d boxes" % (name, len(built)))
 
     for name, (sketch, blocks) in GUNS.items():
         image, built, scale = build(name, sketch)

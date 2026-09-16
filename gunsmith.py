@@ -108,6 +108,19 @@ class Sketch:
                     self._put(cx, cy, material)
         return self
 
+    def recolour(self, material, x0, y0, x1, y1):
+        """Repaints only where there is already something.
+
+        A band round a roll of gauze, the fluid inside a syringe barrel, a label on a bottle: all of
+        them are a rectangle that must stop at the edge of a curve somebody else drew. Painting them as
+        rectangles instead gives a band with square ends sticking out of a circle.
+        """
+        for cy in self._cells_y(y0, y1):
+            for cx in self._cells_x(x0, x1):
+                if 0 <= cx < self.wide and 0 <= cy < self.tall and self.cells[cy][cx] is not None:
+                    self.cells[cy][cx] = material
+        return self
+
     def erase(self, x0, y0, x1, y1):
         for cy in self._cells_y(y0, y1):
             for cx in self._cells_x(x0, x1):

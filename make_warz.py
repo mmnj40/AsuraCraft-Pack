@@ -289,16 +289,10 @@ def magazine(body, width, top, curve=0.0):
     return image
 
 
+# The medicine is not here any more. It is built by make_gun_models.py as proper three-dimensional
+# models, the same way the weapons are - a flat sixteen pixel sprite sitting next to a two hundred box
+# rifle looked exactly like the placeholder it was.
 SPRITES = {
-    "bandage_green": bandage((86, 182, 96, 255)),
-    "bandage_blue": bandage((86, 152, 214, 255)),
-    "bandage_red": bandage((202, 66, 58, 255)),
-    "painkillers": painkillers(),
-    "firstaid": firstaid(),
-    "medkit": medkit(),
-    "epinephrine": syringe((236, 238, 242, 255), (214, 198, 96, 255)),
-    "antidote": syringe((92, 178, 108, 255)),
-    "antidote_full": syringe((126, 226, 138, 255), (222, 202, 104, 255)),
     "ammo_pistol": rounds((178, 142, 66, 255), 7, 3, 3),
     "ammo_rifle": rounds((176, 150, 84, 255), 11, 3, 3),
     "ammo_shotgun": rounds((174, 54, 48, 255), 8, 4, 2),
